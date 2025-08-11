@@ -8,7 +8,7 @@ library(ggplot2)
 library(geoAr)
 # conicet <- read_csv("D:/concurso_contar_con_datos/base_becas_e_ingresos_desarrollo_NNyA_2010_2020.csv") ubicación Flor
 # conicet <- read_csv("D:/concurso_contar_con_datos/nuevo/base_becas_e_ingresos_desarrollo_NNyA_2010_2020.csv") #Fer
-conicet <- read_csv("data/base_becas_e_ingresos_desarrollo_NNyA_2010_2020.csv")
+conicet <- read_csv("https://raw.githubusercontent.com/AgendasDesarrolloInfantil/Smulski_et_al_2023/refs/heads/master/base_becas_e_ingresos_desarrollo_NNyA_2010_2020.csv")
 
 # Crear el diccionario con localidades
 diccionario_localidades <- unique(conicet$LOCALIDAD)
@@ -94,6 +94,13 @@ conicet <- conicet %>%
     PROVINCIA == "CABA" ~ "CABA",
     TRUE ~ "Resto del país"  # Todas las demás provincias se agrupan aquí
   ))
+
+# conicet <- conicet %>%
+#   mutate(region = case_when(
+#     PROVINCIA == "BUENOS AIRES" ~ "Buenos Aires",
+#     PROVINCIA == "CABA" ~ "CABA",
+#     TRUE ~ "Resto del país"  # Todas las demás provincias se agrupan aquí
+#   ))
 
 
 

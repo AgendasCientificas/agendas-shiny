@@ -37,12 +37,9 @@ paleta_colores_region <- function(provincia) {
   return(color_resultante)
 }
 
+# Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
-# Cargar los datos asegurando la codificación correcta
-# conicet <- read_csv("C:/Users/usuario/Desktop/Concurso_Contar_con_Datos/Proyectos_CONICET/conicet_preprocesado.csv", locale = locale(encoding = "UTF-8"))
-# conicet <- read_csv("D:/concurso_contar_con_datos/conicet_preprocesado.csv")
-# conicet <- read_csv("../data/conicet_preprocesado.csv")
-# setwd("D:/concurso_contar_con_datos/github/code")
+conicet <- read.csv("../data/processed_data.csv", fileEncoding = "UTF-8")
 
 
 
@@ -88,8 +85,8 @@ ui <-
                           class = "titulo-app",
                           h1(
                             style = "margin: 20px 0; font-family: 'Nimbus Sans', sans-serif; font-weight: bold;", 
-                            "Ciencia sobre crecer, al alcance de todos:
-                            Agendas científicas sobre desarrollo infantil"
+                            "Agendas científicas sobre desarrollo infantil: 
+                            relevamiento y análisis de datos abiertos del CONICET"
                           )
                         ),
                         
@@ -100,8 +97,11 @@ ui <-
                                    div(
                                      style = 'font-size: 18px; text-align: justify; background-color: #ABDDDE; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
                                      p(HTML("<strong>CONICET</strong> es el principal organismo de ciencia y tecnología del país. 
-                                     Conocer <strong>qué</strong> temáticas se financian y <strong>dónde</strong> se investigan es información valiosa para la elaboración de políticas públicas, la formación de redes de investigadores y la sociedad civil en general.
-                                       ")),
+                                            Conocer las temáticas de investigación de quienes lo integran y su localización geográfica e institucional
+                                            constituye información valiosa para la exploración de agendas de investigación, 
+                                            el establecimiento de vínculos interinstitucionales y de redes de investigadores. 
+                                            Asimismo es un potencial insumo para elaboración de políticas científicas y la 
+                                            discusión pública basada en información accesible.")),
                                      p(HTML("<strong>Esta información es pública, pero no es de fácil acceso.</strong>"))
                                    )
                             ),
@@ -110,9 +110,12 @@ ui <-
                             column(8, 
                                    div(
                                      style = 'font-size: 18px; text-align: justify; background-color: #ABDDDE; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
-                                     p(HTML("Basándonos en datos recopilados en <strong><a href='https://ojs.revistacts.net/index.php/CTS/article/view/410' target='_blank'>este</a></strong> trabajo sobre proyectos financiados de desarrollo infantil, generamos el siguiente <strong>tablero interactivo</strong>. 
-                    La elaboración de este tipo de herramientas resulta de valor para <strong>fomentar redes de trabajo, colaboración y diálogo entre quienes investigan en el campo del desarrollo.</strong>")),
-                                     p(HTML("Además, este trabajo podría replicarse para distintas áreas, <strong>mejorando la accesibilidad a la información y fortaleciendo la comunidad científica argentina.</strong>"))
+                                     p(HTML("Basándonos en las bases de datos recopiladas, analizamos el comportamiento de las becas e ingresos 
+                                     otorgados por organismo en el periodo 2010-2020 a candidatos y candidatas con temas vinculados al desarrollo Niños, 
+                                     Niñas y Adolescentes considerando asimismo su distribución geográfica y disciplinar. 
+                                            Estos resultados fueron publicados en el año 2024 en la revista Iberoamericana de Ciencia, Tecnología y Sociedad (Smulski, et al. 2024).")),
+                                     p(HTML("Aquí presentamos un tablero interactivo que pone a disposición la información recopilada, 
+                                            sistematizada y analizada en dicha publicación con el fin de facilitar el acceso a la información."))
                                    )
                             )
                           )
