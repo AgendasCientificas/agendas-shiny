@@ -39,7 +39,7 @@ paleta_colores_region <- function(provincia) {
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
-conicet <- read.csv("../data/processed_data.csv", fileEncoding = "UTF-8")
+conicet <- read.csv("data/processed_data.csv", fileEncoding = "UTF-8")
 
 
 
