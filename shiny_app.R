@@ -12,34 +12,12 @@ library(shinyWidgets)
 library(geoAr) 
 library(reactable)
 library(plotly)
+source("helper_code/paletas_colores.R")
 
-# Función para asignar colores a las regiones
-paleta_colores_region <- function(provincia) {
-  # Definir los colores
-  colores <- wes_palette("Darjeeling1")[c(5, 2, 3)]  # Tres colores de la paleta
-  nombres_regiones <- c("CABA", "Buenos Aires", "Resto del país")  # Nombres de las regiones
-  colores_asignados <- setNames(colores, nombres_regiones)  # Asignar nombres a los colores
-  
-  # Añadir un color para casos de provincia desconocida
-  colores_asignados["Desconocida"] <- "gray"
-  
-  # Mapear las provincias a regiones utilizando ifelse para vectores
-  color_resultante <- ifelse(
-    provincia == "CABA", 
-    colores_asignados["CABA"], 
-    ifelse(
-      provincia == "Buenos Aires", 
-      colores_asignados["Buenos Aires"], 
-      colores_asignados["Resto del país"]
-    )
-  )
-  
-  return(color_resultante)
-}
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
-conicet <- read.csv("data/processed_data.csv", fileEncoding = "UTF-8")
+conicet <- read.csv("data/processed_data.csv")
 
 
 
@@ -48,10 +26,22 @@ conicet <- conicet %>%
   filter(!is.na(AÑO), !is.na(TIPO.CONVOCATORIA), !is.na(lon), !is.na(lat), !is.na(Nombre_comision))
 
 # Reemplazar nombres de regiones según tu requerimiento
-conicet$region <- ifelse(conicet$region == "Buenos Aires", "Buenos Aires",
-                         ifelse(conicet$region == "CABA", "CABA",
-                                ifelse(conicet$region == "Resto del país", "Resto del país", "Desconocida")))
+# conicet$region <- ifelse(conicet$region == "Buenos Aires", "Buenos Aires",
+#                          ifelse(conicet$region == "CABA", "CABA",
+#                                 ifelse(conicet$region == "Resto del país", "Resto del país", "Desconocida")))
 
+
+# conicet <- conicet %>%
+#   mutate(region = case_when(
+#     region == "Buenos Aires" ~ "Buenos Aires",
+#     region == "CABA" ~ "CABA",
+#     region == "Región Centro" ~ "Región Centro",
+#     region == "Región Cuyo" ~ "Región Cuyo",
+#     region == "NOA" ~ "NOA",
+#     region == "NEA" ~ "NEA",
+#     region == "Patagonia" ~ "Patagonia",
+#     TRUE ~ "Desconocida"
+#   ))
 
 # Obtener el segundo color de la paleta "Darjeeling2"
 color_fondo_titulo <- wes_palette("Darjeeling2")[2]
@@ -191,12 +181,14 @@ ui <-
 # Server---------------
 server <- function(input, output, session) {
   
+
+  
   # Filtrar los datos por año, tipo de proyecto y disciplina
   filteredData <- reactive({
     conicet %>%
       filter(AÑO >= input$yearInput[1], AÑO <= input$yearInput[2],  # Ajustar filtro de año para rango
-             Nombre_comision %in% input$disciplinaInput,
-             region != "Desconocida")  # Excluir "Desconocida"
+             Nombre_comision %in% input$disciplinaInput)
+             # REGION != "Desconocida")  # Excluir "Desconocida"
   })
   
   output$mapa <- renderLeaflet({
@@ -217,6 +209,10 @@ server <- function(input, output, session) {
   
   # Observación para actualizar el mapa según los datos filtrados
   observe({
+    
+    # source("helper_code/paletas_colores.R")
+
+    
     datos <- filteredData()
     
     # if (nrow(datos) > 0) {
@@ -229,7 +225,7 @@ server <- function(input, output, session) {
         ~lon, ~lat, 
         popup = ~paste(LOCALIDAD, "<br>", "Número de proyectos: ", count, "<br>"),  
         radius = ~log10(count + 1) * 5,  # Ajustar el tamaño según los filtros
-        color = ~paleta_colores_region(region),  # Colores según región
+        color = ~paleta_colores_region(REGION),        # Colores según región
         fillOpacity = 0.6
       )
     # }
@@ -339,24 +335,29 @@ server <- function(input, output, session) {
   # Renderizar gráfico de "Proyectos por región"
   output$graficoProyectosRegion <- renderPlot({
     datos_region <- filteredData() %>%
-      group_by(region) %>%
+      group_by(REGION) %>%
       summarise(total_proyectos = n())
     
-    # Reordenar las regiones para que Buenos Aires esté al lado de CABA
-    datos_region <- datos_region %>%
-      mutate(region = factor(region, levels = c("CABA", "Buenos Aires", "Resto del país")))
+    # Reordenar las regiones para que queden descendentes
+    # datos_region <- datos_region %>%
+    #   mutate(region = reorder(region, total_proyectos)) 
     
-    ggplot(datos_region, aes(x = region, y = total_proyectos, fill = region)) +
+    datos_region %>%
+      mutate(REGION = reorder(REGION, total_proyectos)) %>% 
+      ggplot(aes(x = REGION, y = total_proyectos, fill = REGION)) +
+      
       geom_bar(stat = "identity") +
       labs(title = "Proyectos por región", x = "", y = "") +  # Quitar nombre ejes y cambiar título
-      scale_fill_manual(values = c("Buenos Aires" = "#00A08A", "CABA" = "#5BBCD6", "Resto del país" = "#F2AD00")) +
+      scale_fill_manual(values = colores_regiones) +
+      # scale_fill_manual(values = c("Buenos Aires" = "#00A08A", "CABA" = "#5BBCD6", "Resto del país" = "#F2AD00")) +
       theme_minimal() +
       theme(plot.title = element_text(size = 18,face = "bold", hjust = 0.5),
             axis.text.x = element_text(size = 14),  
             axis.text.y = element_text(size = 14),
             axis.title.y = element_text(size = 20, face = "bold"), 
             legend.position = "none"
-      )
+      )+
+      coord_flip()
   })
   
   # Tabla de datos

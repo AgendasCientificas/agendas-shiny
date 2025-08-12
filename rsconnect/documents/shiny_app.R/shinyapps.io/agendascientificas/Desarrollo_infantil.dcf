@@ -5,6 +5,6 @@ account: agendascientificas
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12948987
-bundleId: 10758081
+bundleId: 10759648
 url: https://agendascientificas.shinyapps.io/Desarrollo_infantil/
 version: 1
