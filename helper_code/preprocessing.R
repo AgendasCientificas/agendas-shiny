@@ -3,11 +3,14 @@ library(shiny)
 library(leaflet)
 library(dplyr)
 library(ggmap)
-library(osmdata)
 library(ggplot2)
 library(geoAr)
+library(sf)
 
-conicet <- read_csv("data/raw_data.csv")
+conicet <- read_csv("data/raw_data.csv")%>% 
+  dplyr::distinct(CONVOCATORIA, NOMBRE.POSTULANTE, AÑO, .keep_all = T)
+
+codigo_deptos <- show_arg_codes(nivel = "departamentos")
 
 conicet = conicet %>%
   mutate(LOCALIDAD = case_when(
@@ -20,30 +23,48 @@ conicet = conicet %>%
     LOCALIDAD == "ESPLUGUES DE LLOBREGAT" ~ "BARCELONA",
     LOCALIDAD == "SAN FDO DEL VALLE DE CATAMARCA" ~ "SAN FERNANDO DEL VALLE DE CATAMARCA",
     LOCALIDAD == "SALTA" ~ "SALTA CAPITAL",
+    # LOCALIDAD == "SANTA FE" ~ "SANTA FE CAPITAL",
+    LOCALIDAD == "SAN MARTIN/JOSE LEON SUAREZ" ~ "SAN MARTIN",
+    
     TRUE ~ LOCALIDAD
   ))
 
-df_coordenadas = conicet %>% 
-  # head(5) %>% 
-  select(LOCALIDAD, PROVINCIA) %>% 
-  distinct_all() %>% 
-  mutate(LOCALIDAD = toupper(LOCALIDAD)) %>% 
-  rowwise() %>% 
-  mutate(coordenadas = list(
-    tryCatch(
-      getbb(paste(LOCALIDAD, PROVINCIA, "Argentina")),
-      error = function(e) NA
+# 1. Obtener partidos por provincia
+provincias <- unique(conicet$PROVINCIA)
+
+
+df_coordenadas = conicet %>%
+  # head(5) %>%
+  select(LOCALIDAD, PROVINCIA) %>%
+  distinct_all() %>%
+  mutate(LOCALIDAD = toupper(LOCALIDAD)) %>%
+  rowwise() %>%
+  mutate(
+    coordenadas = list(
+      suppressWarnings(
+        tryCatch(
+          {
+            res <- get_localidades(nombre = LOCALIDAD, provincia = PROVINCIA, max = 1)
+            if (nrow(res) == 0) stop("Municipio no encontrado")
+            res
+          },
+          error = function(e) {
+            tryCatch(
+              get_provincias(nombre = PROVINCIA),
+              error = function(e2) NA
+            )
+          }
+        )
       )
     )
-  )%>% 
-    # getbb(paste(LOCALIDAD, PROVINCIA, "Argentina")))) %>% 
-  mutate(lon = if (is.matrix(coordenadas)) mean(coordenadas["x", ]) else NA_real_,
-         lat = if (is.matrix(coordenadas)) mean(coordenadas["y", ]) else NA_real_
-         ) %>% 
-  select(-coordenadas)
+  ) %>%
+  unnest(coordenadas,keep_empty = T) %>% 
+  select(LOCALIDAD, PROVINCIA, centroide_lat, centroide_lon) %>% 
+  rename(lon = "centroide_lon",
+         lat = "centroide_lat")
 
 
-sum(is.na(df_coordenadas$lon))
+
 
 conicet = conicet %>% 
   left_join(df_coordenadas, by = c("LOCALIDAD", "PROVINCIA"))

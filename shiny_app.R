@@ -17,7 +17,7 @@ source("helper_code/paletas_colores.R")
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
-conicet <- read.csv("data/processed_data.csv")
+conicet <- read.csv("data/processed_data.csv") 
 
 
 
@@ -213,7 +213,10 @@ server <- function(input, output, session) {
     # source("helper_code/paletas_colores.R")
 
     
-    datos <- filteredData()
+    # datos <- filteredData()
+    datos <- filteredData() %>%
+      group_by(LOCALIDAD, PROVINCIA, REGION, lon, lat) %>%
+      summarise(count = n(), .groups = "drop")
     
     # if (nrow(datos) > 0) {
     # Calcular el número total de proyectos después de aplicar filtros
@@ -226,7 +229,8 @@ server <- function(input, output, session) {
         popup = ~paste(LOCALIDAD, "<br>", "Número de proyectos: ", count, "<br>"),  
         radius = ~log10(count + 1) * 5,  # Ajustar el tamaño según los filtros
         color = ~paleta_colores_region(REGION),        # Colores según región
-        fillOpacity = 0.6
+        opacity = 0.8,
+        fillOpacity = 1
       )
     # }
   })
