@@ -1,12 +1,15 @@
-# Ciencia sobre crecer, al alcance de todos
+# Agendas científicas sobre desarrollo infantil: relevamiento y análisis de datos abiertos del CONICET
 
-CONICET, el principal organismo de ciencia y tecnología del país, financia diversas temáticas de investigación. Sin embargo, el acceso a esta información pública es limitado.
+CONICET es el principal organismo de ciencia y tecnología del país. Conocer las temáticas de investigación de quienes lo integran y su localización geográfica e institucional constituye información valiosa para la exploración de agendas de investigación, el establecimiento de vínculos interinstitucionales y de redes de investigadores. Asimismo es un potencial insumo para elaboración de políticas científicas y la discusión pública basada en información accesible.
 
-Con base en datos sobre proyectos financiados en desarrollo infantil, hemos creado un tablero interactivo que fomenta la colaboración y el diálogo entre investigadores. Esta herramienta puede servir de modelo para mejorar la accesibilidad a investigaciones en otros campos, fortaleciendo la comunidad científica argentina.
+Esta información es pública, pero no es de fácil acceso.
 
-En las últimas dos décadas, el desarrollo infantil ha cobrado relevancia en la agenda política argentina, impulsado por políticas científicas que abordan problemas sociales. Un estudio de la Unidad de Neurobiología Aplicada (UNA, CEMIC-CONICET) analizó el impacto de estas políticas en la ciencia, revelando un creciente interés en estos temas. Los datos están disponibles para exploración interactiva.
+Basándonos en las bases de datos recopiladas, analizamos el comportamiento de las becas e ingresos otorgados por organismo en el periodo 2010-2020 a candidatos y candidatas con temas vinculados al desarrollo Niños, Niñas y Adolescentes considerando asimismo su distribución geográfica y disciplinar. Estos resultados fueron publicados en el año 2024 en la revista Iberoamericana de Ciencia, Tecnología y Sociedad (Smulski, et al. 2024).
 
 El artículo original puede leerse [aquí](https://ojs.revistacts.net/index.php/CTS/article/view/410)
+
+Aquí presentamos un tablero interactivo que pone a disposición la información recopilada, sistematizada y analizada en dicha publicación con el fin de facilitar el acceso a la información.
+
 
 ## Organización del Repo
 Este repositorio contiene un tablero interactivo que proporciona información valiosa sobre proyectos financiados en el área del desarrollo infantil. El tablero se ha desarrollado con el objetivo de fomentar redes de trabajo, colaboración y diálogo entre quienes investigan en este campo. La estructura del repositorio es la siguiente:
