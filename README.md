@@ -14,15 +14,11 @@ Aquí presentamos un tablero interactivo que pone a disposición la información
 ## Organización del Repo
 Este repositorio contiene un tablero interactivo que proporciona información valiosa sobre proyectos financiados en el área del desarrollo infantil. El tablero se ha desarrollado con el objetivo de fomentar redes de trabajo, colaboración y diálogo entre quienes investigan en este campo. La estructura del repositorio es la siguiente:
 
-- **code/**: Esta carpeta contiene los scripts utilizados para procesar los datos y para construir la aplicación Shiny.
-  - **preprocessing.R**: Código para el preprocesamiento de los datos.
-  - **shiny_app.R**: Código para la creación de la aplicación Shiny.
+- **helper_code/**: Esta carpeta contiene algunas funciones y objetos utilizados por la shiny
+- **ui.R**: Contiene el frontend
+- **server.R**: Contiene el backend
+- **deployment_script.R**: es una sola linea pero sirve para deployar la app con el nombre correcto
 
 - **data/**: Esta carpeta incluye dos conjuntos de datos.
   - **raw_data.csv**: Base de datos sin procesar.
   - **processed_data.csv**: Base de datos procesada.
-
-## Cómo Ejecutar el Tablero
-1. Clona este repositorio: 
-   ```bash
-   git clone https://github.com/AgendasCientificas/nombre_del_repositorio.git
