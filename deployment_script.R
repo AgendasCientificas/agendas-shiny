@@ -1,1 +1,1 @@
-rsconnect::deployApp(appPrimaryDoc = "shiny_app.R", appName = "Desarrollo_infantil")
+rsconnect::deployApp(appName = "Desarrollo_infantil")
