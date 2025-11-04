@@ -109,7 +109,7 @@ server <- function(input, output, session) {
   })
   
   
-  output$nubePalabras <- renderUI({
+  output$plot_palabras_clave <- renderUI({
   
   
   
@@ -196,7 +196,7 @@ server <- function(input, output, session) {
     )
   
   # Mostrar el gráfico
-  barplot_output
+  # plot_palabras_clave
   
   })
   

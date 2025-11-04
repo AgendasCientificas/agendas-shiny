@@ -103,7 +103,7 @@ ui <-
                           ),
                           
                           # Nube de palabras
-                          uiOutput("nubePalabras")  # Ajuste de altura sin scroll
+                          uiOutput("plot_palabras_clave")  # Ajuste de altura sin scroll
                         ),
                         
                         mainPanel(
