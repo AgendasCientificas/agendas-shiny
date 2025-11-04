@@ -102,7 +102,7 @@ ui <-
                                                     multiple = TRUE,
                           ),
                           
-                          # Nube de palabras
+                          # Plot palabras clave
                           uiOutput("plot_palabras_clave")  # Ajuste de altura sin scroll
                         ),
                         
