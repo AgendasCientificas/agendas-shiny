@@ -12,9 +12,13 @@ library(shinyWidgets)
 library(geoAr) 
 library(reactable)
 library(plotly)
+library(textstem)
 source("helper_code/paletas_colores.R")
+library(udpipe)
 
-
+# Descargar y cargar el modelo de lematización para español
+modelo_espanol <- udpipe_download_model(language = "spanish")
+modelo <- udpipe_load_model(modelo_espanol$file_model)
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
@@ -103,71 +107,90 @@ server <- function(input, output, session) {
       )
     # }
   })
+  # Función para lematizar todas las palabras clave
   
-  # Nube de palabras reemplazada por un barplot horizontal
-  output$nubePalabras <- renderUI({
-    palabras_clave <- filteredData()$PALABRAS.CLAVE.PROYECTO
-    if (length(palabras_clave) == 0 || all(is.na(palabras_clave))) {
-      return(NULL)  # Evitar errores si no hay palabras clave
-    }
+  eliminar_tildes <- function(texto) {
+    texto <- chartr("áéíóúÁÉÍÓÚ", "aeiouAEIOU", texto)  # Eliminar tildes
+    return(texto)
+  }
+  
+
+  
+  lematiza_udpipe <- function(frase) {
+    # Procesar la frase usando el modelo
+    texto_analizado <- udpipe_annotate(modelo, x = frase)
+    texto_analizado <- as.data.frame(texto_analizado)
     
-    texto_completo <- paste(na.omit(palabras_clave), collapse = " ")
-    corpus <- Corpus(VectorSource(texto_completo))
-    
-    # Transformaciones sobre el corpus
-    corpus <- tm_map(corpus, content_transformer(tolower))
-    corpus <- tm_map(corpus, content_transformer(removePunctuation))
-    corpus <- tm_map(corpus, content_transformer(removeWords), stopwords("spanish"))
-    corpus <- tm_map(corpus, content_transformer(stripWhitespace))
-    
-    # Crear matriz de términos
-    dtm <- TermDocumentMatrix(corpus)
-    matriz_dtm <- as.matrix(dtm)
-    frecuencia <- sort(rowSums(matriz_dtm), decreasing = TRUE)
-    
-    # Verificar si hay palabras
-    if (length(frecuencia) == 0) {
-      return(NULL)  # Evitar errores si no hay palabras
-    }
-    
-    nube <- data.frame(palabra = names(frecuencia), freq = frecuencia)
-    
-    # Filtrar las 15 palabras más frecuentes
-    nube_filtrada <- head(nube, 20)  # Seleccionar solo las top 15
-    
-    # Definir la paleta de colores (de oscuro a claro)
-    colores <- c("#f39c12", "#e67e22", "#d35400", "#e74c3c", "#c0392b")
-    
-    # Asignar color según la frecuencia
-    max_freq <- max(nube_filtrada$freq)
-    min_freq <- min(nube_filtrada$freq)
-    
-    # Normalizar las frecuencias para que se ajusten a la longitud de la paleta
-    nube_filtrada$color <- sapply(nube_filtrada$freq, function(x) {
-      color_idx <- floor((x - min_freq) / (max_freq - min_freq) * (length(colores) - 1)) + 1
-      colores[color_idx]  # Asigna el color correspondiente
-    })
-    
-    # Crear el gráfico de barras horizontal
-    barplot_output <- plotly::plot_ly(nube_filtrada, x = ~freq, 
-                                      y = ~reorder(palabra, freq),  # Reordenar palabras por frecuencia
-                                      type = "bar", orientation = "h",
-                                      marker = list(color = nube_filtrada$color)) %>%
-      layout(
-        xaxis = list(title = ""),
-        yaxis = list(title = "", tickfont = list(size = 16), standoff = 20, automargin = TRUE),  # Agrandar y separar las palabras del eje Y
-        title = list(
-          text = "Palabras clave más frecuentes", 
-          font = list(family = "Arial", size = 18, color = "black", weight = "bold"),  # Negrita corregida
-          x = 0.5,  # Centrar el título
-          y = 0.99  # Mover un poco el título hacia abajo
-        ),
-        margin = list(l = 150),  # Aumentar margen izquierdo para separar más las palabras del eje
-        height = 700
-      )
-    
-    return(barplot_output)
+    # Retornar solo las palabras lematizadas
+    return(texto_analizado$lemma)
+  }
+  # Convertir las palabras clave a minúsculas y eliminar tildes
+  palabras_clave  <- conicet$PALABRAS.CLAVE.PROYECTO %>%
+    tolower() %>%               # Convertir todo a minúsculas
+    eliminar_tildes()           # Eliminar tildes
+  texto_completo <- paste(na.omit(palabras_clave), collapse = " ")
+  texto_completo <- lematiza_udpipe(texto_completo)
+  # Agrupar las palabras manualmente 
+  texto_completo <- gsub("niña|niño", "niñez", texto_completo)
+  # Agrupar las palabras relacionadas antes de contar las frecuencias
+  texto_completo <- gsub("adolescent|adolescente", "adolescencia", texto_completo)
+  texto_completo <- gsub("educacional|educativa|educativo", "educacion", texto_completo)
+  texto_completo <- gsub("alcoholismo|alcoholico", "alcohol", texto_completo)
+  texto_completo <- gsub("respiratoria", "respiratorio", texto_completo)
+  texto_completo <- gsub("familiar", "familia", texto_completo)
+  texto_completo
+  
+  eliminar <- c("|", "el", "en", "a", "de", "por", "para", NA, "t", "y", ")", "(",
+                "b","1", "2", "3","4",  "d", "c", "no", ",", ".","-", "con")
+  
+  # Filtrar las palabras de 'texto_completo' que no estén en 'eliminar'
+  texto_completo <- texto_completo[!texto_completo %in% eliminar]
+  
+  # Convertir a data.frame para mejor visualización
+  frecuencia_df <- as.data.frame(table(texto_completo))
+  frecuencia_df$texto_completo <- as.character(frecuencia_df$texto_completo)
+  
+  # Ver la tabla de frecuencias
+  colnames(frecuencia_df) <- c("palabra", "freq")
+  
+  # Crear dataframe con los lemas y su frecuencia
+  
+  
+  # Filtrar las 20 palabras más frecuentes
+  nube_filtrada <- head(frecuencia_df[order(frecuencia_df$freq, decreasing = TRUE), ], 20)
+  
+  # Definir la paleta de colores (de oscuro a claro)
+  colores <- c("#f39c12", "#e67e22", "#d35400", "#e74c3c", "#c0392b")
+  
+  # Normalizar las frecuencias para asignar un color
+  max_freq <- max(nube_filtrada$freq)
+  min_freq <- min(nube_filtrada$freq)
+  
+  nube_filtrada$color <- sapply(nube_filtrada$freq, function(x) {
+    color_idx <- floor((x - min_freq) / (max_freq - min_freq) * (length(colores) - 1)) + 1
+    colores[color_idx]
   })
+  
+  # Crear el gráfico de barras horizontal con Plotly
+  barplot_output <- plot_ly(nube_filtrada, x = ~freq, 
+                            y = ~reorder(palabra, freq),  # Reordenar palabras por frecuencia
+                            type = "bar", orientation = "h",
+                            marker = list(color = nube_filtrada$color)) %>%
+    layout(
+      xaxis = list(title = ""),
+      yaxis = list(title = "", tickfont = list(size = 16), standoff = 20, automargin = TRUE),
+      title = list(
+        text = "Palabras clave más frecuentes", 
+        font = list(family = "Arial", size = 18, color = "black", weight = "bold"),  
+        x = 0.5,  
+        y = 0.99  # Centrar el título
+      ),
+      margin = list(l = 150),  # Aumentar margen izquierdo para separar más las palabras del eje
+      height = 700
+    )
+  
+  # Mostrar el gráfico
+  barplot_output}
   
   
   # Renderizar gráfico de "Proyectos a lo largo del tiempo"
