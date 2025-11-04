@@ -15,7 +15,6 @@ library(plotly)
 library(textstem)
 library(udpipe)
 source("helper_code/paletas_colores.R")
-source("helper_code/lemmatization.R")
 
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
@@ -28,23 +27,7 @@ conicet <- read.csv("data/processed_data.csv")
 conicet <- conicet %>%
   filter(!is.na(AÑO), !is.na(TIPO.CONVOCATORIA), !is.na(lon), !is.na(lat), !is.na(Nombre_comision))
 
-# Reemplazar nombres de regiones según tu requerimiento
-# conicet$region <- ifelse(conicet$region == "Buenos Aires", "Buenos Aires",
-#                          ifelse(conicet$region == "CABA", "CABA",
-#                                 ifelse(conicet$region == "Resto del país", "Resto del país", "Desconocida")))
 
-
-# conicet <- conicet %>%
-#   mutate(region = case_when(
-#     region == "Buenos Aires" ~ "Buenos Aires",
-#     region == "CABA" ~ "CABA",
-#     region == "Región Centro" ~ "Región Centro",
-#     region == "Región Cuyo" ~ "Región Cuyo",
-#     region == "NOA" ~ "NOA",
-#     region == "NEA" ~ "NEA",
-#     region == "Patagonia" ~ "Patagonia",
-#     TRUE ~ "Desconocida"
-#   ))
 
 # Obtener el segundo color de la paleta "Darjeeling2"
 color_fondo_titulo <- wes_palette("Darjeeling2")[2]
@@ -108,6 +91,39 @@ server <- function(input, output, session) {
   
   
   output$plot_palabras_clave <- renderUI({
+  
+  # Implemento la lemmatización
+    
+  source("helper_code/lemmatization.R")
+    
+    # Convertir las palabras clave a minúsculas y eliminar tildes
+    palabras_clave  <- conicet$PALABRAS.CLAVE.PROYECTO %>%
+      tolower() %>%               # Convertir todo a minúsculas
+      eliminar_tildes()           # Eliminar tildes
+    texto_completo <- paste(na.omit(palabras_clave), collapse = " ")
+    texto_completo <- lematiza_udpipe(texto_completo)
+    # Agrupar las palabras manualmente 
+    texto_completo <- gsub("niña|niño", "niñez", texto_completo)
+    # Agrupar las palabras relacionadas antes de contar las frecuencias
+    texto_completo <- gsub("adolescent|adolescente", "adolescencia", texto_completo)
+    texto_completo <- gsub("educacional|educativa|educativo", "educacion", texto_completo)
+    texto_completo <- gsub("alcoholismo|alcoholico", "alcohol", texto_completo)
+    texto_completo <- gsub("respiratoria", "respiratorio", texto_completo)
+    texto_completo <- gsub("familiar", "familia", texto_completo)
+    texto_completo
+    
+    eliminar <- c("|", "el", "en", "a", "de", "por", "para", NA, "t", "y", ")", "(",
+                  "b","1", "2", "3","4",  "d", "c", "no", ",", ".","-", "con")
+    
+    # Filtrar las palabras de 'texto_completo' que no estén en 'eliminar'
+    texto_completo <- texto_completo[!texto_completo %in% eliminar]
+    
+    # Convertir a data.frame para mejor visualización
+    frecuencia_df <- as.data.frame(table(texto_completo))
+    frecuencia_df$texto_completo <- as.character(frecuencia_df$texto_completo)
+    
+    # Ver la tabla de frecuencias
+    colnames(frecuencia_df) <- c("palabra", "freq")
   
 
   
