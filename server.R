@@ -107,6 +107,12 @@ server <- function(input, output, session) {
       )
     # }
   })
+  
+  
+  output$nubePalabras <- renderUI({
+  
+  
+  
   # Función para lematizar todas las palabras clave
   
   eliminar_tildes <- function(texto) {
@@ -190,7 +196,9 @@ server <- function(input, output, session) {
     )
   
   # Mostrar el gráfico
-  barplot_output}
+  barplot_output
+  
+  })
   
   
   # Renderizar gráfico de "Proyectos a lo largo del tiempo"
