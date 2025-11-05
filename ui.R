@@ -33,44 +33,51 @@ ui <-
                      fluidPage(
                        
                        tags$head(
-                          # tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"),
-                          
                           
                           tags$style(
-                            HTML("
-                @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-            ")
-                          ),
+                          HTML("
+                            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+                             
+                            body {
+                              font-family: 'Montserrat', sans-serif;
+                            }"
+                               )
+                          )
                           
                           ),
                        
                        div(
+                         
                          class = "titulo-app",
+                         
                          h1(
-                           style = "margin: 20px 0; font-weight: bold;",
-                           "Agendas científicas sobre desarrollo infantil: 
-                           relevamiento y análisis de datos abiertos del CONICET"
+                           style = "margin: 20px 0; font-weight: bold; text-align: center;",
+                           HTML("Agendas científicas sobre desarrollo infantil:
+                                <br>
+                                relevamiento y análisis de datos abiertos del CONICET")
                            )
+                         
                          ),
                        
                        fluidPage(
                          
                          tags$head(
-                           # tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"),
-                           
                            
                            tags$style(
-                             HTML("
-                @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-            ")
-                           ),
                            
-                         ),
+                            HTML("
+                              @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+                                 ")
+                            ),
+                           ),
+                         
                           fluidRow(
+                            # style = "display: flex; flex-wrap: wrap;",
+                            
                             # Primer recuadro
                             column(4, 
                                    div(
-                                     style = 'font-size: 18px; text-align: justify; background-color: #e1f7f7; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
+                                     style = 'height: 90%;font-size: 18px; text-align: justify; background-color: #e1f7f7; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
                                      p(HTML("Somos un grupo de investigación perteneciente al <strong>CONICET</strong>, el principal organismo de ciencia y tecnología del país.<br><br>
                                             Nos interesa conocer las temáticas de investigación de quienes lo integran y su localización geográfica e institucional
                                             constituye información valiosa para la exploración de agendas de investigación, 
@@ -83,38 +90,53 @@ ui <-
                             
                             # Segundo recuadro
                             column(8, 
-                                   div(
-                                     style = 'font-size: 18px; text-align: justify; background-color: #e1f7f7; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
-                                     p(HTML("Basándonos en las bases de datos recopiladas, analizamos el comportamiento de las becas e ingresos 
+                                   # style = "display: flex; flex-direction: column;",
+                                   
+                                   fluidRow(
+                                     
+                                     
+                                     
+                                     div(
+                                       style = 'height: 100%;font-size: 18px; text-align: justify; background-color: #e1f7f7; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
+                                       p(HTML("Basándonos en las bases de datos recopiladas, analizamos el comportamiento de las becas e ingresos 
                                      otorgados por organismo en el periodo 2010-2020 a candidatos y candidatas con temas vinculados al desarrollo Niños, 
                                      Niñas y Adolescentes considerando asimismo su distribución geográfica y disciplinar. 
                                             Estos resultados fueron publicados en el año 2024 en la revista Iberoamericana de Ciencia, Tecnología y Sociedad (Smulski, et al. 2024).")),
-                                     p(HTML("Aquí presentamos un tablero interactivo que pone a disposición la información recopilada, 
+                                       p(HTML("Aquí presentamos un tablero interactivo que pone a disposición la información recopilada, 
                                             sistematizada y analizada en dicha publicación con el fin de facilitar el acceso a la información."))
+                                     )
+                                     
                                    ),
                                    
-                                   div(
-                                     style = 'font-size: 18px; text-align: justify; background-color: #f5f5f5; padding: 10px; border-radius: 5px; margin: 15px 5px; font-weight: bold;', 
-                                     p(HTML("Seleccionar parámetros de búsqueda")),
+                                   fluidRow(
+                                    
                                      
-                                     sliderInput("yearInput",
-                                                 "Período de tiempo:",
-                                                 min = min(conicet$AÑO, na.rm = TRUE),
-                                                 max = max(conicet$AÑO, na.rm = TRUE),
-                                                 value = range(conicet$AÑO, na.rm = TRUE),
-                                                 width = "100%",
-                                                 sep = ""),
+                                     #### Selección de parámetros ####
                                      
-                                     shinyWidgets::pickerInput("disciplinaInput", 
-                                                               "Disciplina:",
-                                                               choices = unique(conicet$Nombre_comision),
-                                                               selected = unique(conicet$Nombre_comision),
-                                                               options = list(`actions-box` = TRUE),
-                                                               multiple = TRUE,
-                                                               width = "100%"
-                                                               )
-                                   
-
+                                     div(
+                                      style = 'font-size: 18px; text-align: justify; background-color: #e8e6e6; padding: 10px; border-radius: 5px; margin: 5px 5px 50px; font-weight: bold;', 
+                                      p(HTML("Seleccionar parámetros de búsqueda<br>")),
+                                      p(HTML(" ")),
+                                      p(HTML(" ")),
+                                      sliderInput("yearInput",
+                                                  "Período de tiempo:",
+                                                  min = min(conicet$AÑO, na.rm = TRUE),
+                                                  max = max(conicet$AÑO, na.rm = TRUE),
+                                                  value = range(conicet$AÑO, na.rm = TRUE),
+                                                  width = "100%",
+                                                  sep = ""),
+                                      
+                                      p(HTML("")),
+                                     
+                                      shinyWidgets::pickerInput("disciplinaInput", 
+                                                                "Disciplina:",
+                                                                choices = unique(conicet$Nombre_comision),
+                                                                selected = unique(conicet$Nombre_comision),
+                                                                options = list(`actions-box` = TRUE),
+                                                                multiple = TRUE,
+                                                                width = "100%"
+                                                                )
+                                      )
                                    ),
                                    
                                    
@@ -123,29 +145,13 @@ ui <-
                           )
                         ),
                        
-                       # Panel lateral
-                        
-                        # sidebarPanel(
-                        #   class = "full-panel",  # Añadir la clase para altura completa
-                        #   # sliderInput("yearInput", "Seleccionar período de tiempo",
-                        #   #             min = min(conicet$AÑO, na.rm = TRUE),
-                        #   #             max = max(conicet$AÑO, na.rm = TRUE),
-                        #   #             value = range(conicet$AÑO, na.rm = TRUE),
-                        #   #             sep = ""),
-                        #   
-                        # 
-                        #   
-                        #   # Nube de palabras
-                            # Ajuste de altura sin scroll
-                        # ),
-                        
-                        # mainPanel(
+                       
                           fluidRow(
                             
                             #Barplot de 
                             column(4, uiOutput("nubePalabras")),
                             
-                            column(4, leafletOutput("mapa", height = "100vh")),  # Mapa a la izquierda
+                            column(4, leafletOutput("mapa", height = "100vh")),  
                             column(4, 
                                    fluidRow(
                                      column(12, plotOutput("graficoProyectosRegion", height = "50vh")),  
