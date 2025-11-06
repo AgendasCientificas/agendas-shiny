@@ -93,9 +93,17 @@ server <- function(input, output, session) {
   
   # Levanto los datos con keywords
   tokenized_keywords_df <- read.csv("data/keywords_data.csv")
-    
+  
+  # Filtrar los datos por año, tipo de proyecto y disciplina
+  filtered_kw <- reactive({
+    tokenized_keywords_df %>%
+      filter(AÑO >= input$yearInput[1], AÑO <= input$yearInput[2],  # Ajustar filtro de año para rango
+             Nombre_comision %in% input$disciplinaInput)
+  })
+  
+  
   # Convertir a data.frame para mejor visualización
-  frecuencia_df <- as.data.frame(table(tokenized_keywords_df$tokenized_keywords))
+  frecuencia_df <- as.data.frame(table(filtered_kw()$tokenized_keywords))
 
   # Ver la tabla de frecuencias
   colnames(frecuencia_df) <- c("palabra", "freq")
