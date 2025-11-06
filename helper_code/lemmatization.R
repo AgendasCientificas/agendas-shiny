@@ -33,12 +33,6 @@ keyword_tokens <- ifelse(
         stringr::str_split(datos$PALABRAS.CLAVE.PROYECTO, pattern = ","),
         stringr::str_split(datos$PALABRAS.CLAVE.PROYECTO, pattern = fixed("|"))
 )
-      #   
-      # )) %>% 
-      # mutate(keyword_tokens)
-      # select(PALABRAS.CLAVE.PROYECTO, keyword_tokens) %>% 
-      # View()
-      # 
 
 keyword_tokens <- str_split(datos$PALABRAS.CLAVE.PROYECTO,
                             pattern = "[,|\\|]+") %>%  # Divido las kw por la coma o la pleca
@@ -48,24 +42,6 @@ keyword_tokens <- str_split(datos$PALABRAS.CLAVE.PROYECTO,
   tolower() %>%                                        # Convertir todo a minúsculas
   eliminar_tildes() %>%                               # Eliminar tildes
   na.omit()
-
-
-#### Pruebo lematizar solo kw de una palabra
-
-# # Lemmatizo las de una palabra
-# one_word_kw <- keyword_tokens[str_count(keyword_tokens, '\\w+') == 1] %>% 
-#   lematiza_udpipe()
-# 
-# # Mantengo igual las de más de 1 palabra
-# phrase_kw <- keyword_tokens[str_count(keyword_tokens, '\\w+') != 1]
-# 
-# # Junto todo
-# normalized_keywords <- c(one_word_kw, phrase_kw)
-# 
-# nrow(table(keyword_tokens))
-# nrow(table(normalized_keywords))
-
-# table(tokenized_keywords) %>% View()
 
 
 tokenized_keywords <- keyword_tokens %>% 
@@ -81,24 +57,17 @@ eliminar <- c("|", "el", "en", "a", "de", "por", "para", NA, "t", "y", ")", "(",
   
 tokenized_keywords <- tokenized_keywords[!tokenized_keywords %in% eliminar]
 
-# nrow(table(tokenized_keywords))
+# Agrupar las palabras relacionadas antes de contar las frecuencias
 
-# table(tokenized_keywords) %>% 
-#   View()
-  
-  # texto_completo <- paste(na.omit(palabras_clave), collapse = " ")
-  # texto_completo <- lematiza_udpipe(texto_completo)
-  
-  # Agrupar las palabras manualmente 
-  # texto_completo <- gsub("niña|niño", "niñez", texto_completo)
-  
-  # # Agrupar las palabras relacionadas antes de contar las frecuencias
-  # texto_completo <- gsub("adolescent|adolescente", "adolescencia", texto_completo)
-  # texto_completo <- gsub("educacional|educativa|educativo", "educacion", texto_completo)
-  # texto_completo <- gsub("alcoholismo|alcoholico", "alcohol", texto_completo)
-  # texto_completo <- gsub("respiratoria", "respiratorio", texto_completo)
-  # texto_completo <- gsub("familiar", "familia", texto_completo)
-  # texto_completo
+tokenized_keywords <- gsub("niño|niña|niñez", "niñez", tokenized_keywords)
+
+tokenized_keywords <- gsub("adolescent|adolescente", "adolescencia", tokenized_keywords)
+tokenized_keywords <- gsub("escuela|escolar", "escuela", tokenized_keywords)
+tokenized_keywords <- gsub("educacional|educativa|educativo", "educacion", tokenized_keywords)
+tokenized_keywords <- gsub("alcoholismo|alcoholico", "alcohol", tokenized_keywords)
+tokenized_keywords <- gsub("respiratoria", "respiratorio", tokenized_keywords)
+tokenized_keywords <- gsub("familiar", "familia", tokenized_keywords)
+tokenized_keywords
   
   # Convertir a data.frame para mejor visualización
   frecuencia_df <- as.data.frame(table(tokenized_keywords))
