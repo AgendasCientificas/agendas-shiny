@@ -91,11 +91,16 @@ server <- function(input, output, session) {
   
   output$plot_palabras_clave <- renderUI({
   
-  # Implemento la lemmatización
+  # Levanto los datos con keywords
+  tokenized_keywords_df <- read.csv("data/keywords_data.csv")
     
-  source("helper_code/lemmatization.R")
+  # Convertir a data.frame para mejor visualización
+  frecuencia_df <- as.data.frame(table(tokenized_keywords_df$tokenized_keywords))
+
+  # Ver la tabla de frecuencias
+  colnames(frecuencia_df) <- c("palabra", "freq")
   
-  frecuencia_df <- normalizar_keywords(conicet)
+  # frecuencia_df <- normalizar_keywords(conicet)
 
   # Filtrar las 20 palabras más frecuentes
   nube_filtrada <- head(frecuencia_df[order(frecuencia_df$freq, decreasing = TRUE), ], 20)
