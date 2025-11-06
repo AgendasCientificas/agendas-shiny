@@ -14,8 +14,6 @@ library(reactable)
 library(plotly)
 source("helper_code/paletas_colores.R")
 
-# Obtener el segundo color de la paleta "Darjeeling2"
-color_fondo_titulo <- wes_palette("Darjeeling2")[2]
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
@@ -26,51 +24,51 @@ ui <-
   navbarPage("",
              
              
-#### Pestaña de página principal ####
-
-            tabPanel("Página principal",
-                     
-                     fluidPage(
-                       
-                       tags$head(
+             #### Pestaña de página principal ####
+             
+             tabPanel("Página principal",
+                      
+                      fluidPage(
+                        
+                        tags$head(
                           
                           tags$style(
-                          HTML("
+                            HTML("
                             @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
                              
                             body {
                               font-family: 'Montserrat', sans-serif;
                             }"
-                               )
+                            )
                           )
                           
-                          ),
-                       
-                       div(
-                         
-                         class = "titulo-app",
-                         
-                         h1(
-                           style = "margin: 20px 0; font-weight: bold; text-align: center;",
-                           HTML("Agendas científicas sobre desarrollo infantil:
+                        ),
+                        
+                        div(
+                          
+                          class = "titulo-app",
+                          
+                          h1(
+                            style = "margin: 20px 0; font-weight: bold; text-align: center;",
+                            HTML("Agendas científicas sobre desarrollo infantil:
                                 <br>
                                 relevamiento y análisis de datos abiertos del CONICET")
-                           )
-                         
-                         ),
-                       
-                       fluidPage(
-                         
-                         tags$head(
-                           
-                           tags$style(
-                           
-                            HTML("
+                          )
+                          
+                        ),
+                        
+                        fluidPage(
+                          
+                          tags$head(
+                            
+                            tags$style(
+                              
+                              HTML("
                               @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
                                  ")
                             ),
-                           ),
-                         
+                          ),
+                          
                           fluidRow(
                             # style = "display: flex; flex-wrap: wrap;",
                             
@@ -109,34 +107,34 @@ ui <-
                                    ),
                                    
                                    fluidRow(
-                                    
+                                     
                                      
                                      #### Selección de parámetros ####
                                      
                                      div(
-                                      style = 'font-size: 18px; text-align: justify; background-color: #e8e6e6; padding: 10px; border-radius: 5px; margin: 5px 5px 50px; font-weight: bold;', 
-                                      p(HTML("Seleccionar parámetros de búsqueda<br>")),
-                                      p(HTML(" ")),
-                                      p(HTML(" ")),
-                                      sliderInput("yearInput",
-                                                  "Período de tiempo:",
-                                                  min = min(conicet$AÑO, na.rm = TRUE),
-                                                  max = max(conicet$AÑO, na.rm = TRUE),
-                                                  value = range(conicet$AÑO, na.rm = TRUE),
-                                                  width = "100%",
-                                                  sep = ""),
-                                      
-                                      p(HTML("")),
-                                     
-                                      shinyWidgets::pickerInput("disciplinaInput", 
-                                                                "Disciplina:",
-                                                                choices = unique(conicet$Nombre_comision),
-                                                                selected = unique(conicet$Nombre_comision),
-                                                                options = list(`actions-box` = TRUE),
-                                                                multiple = TRUE,
-                                                                width = "100%"
-                                                                )
-                                      )
+                                       style = 'font-size: 18px; text-align: justify; background-color: #e8e6e6; padding: 10px; border-radius: 5px; margin: 5px 5px 50px; font-weight: bold;', 
+                                       p(HTML("Seleccionar parámetros de búsqueda<br>")),
+                                       p(HTML(" ")),
+                                       p(HTML(" ")),
+                                       sliderInput("yearInput",
+                                                   "Período de tiempo:",
+                                                   min = min(conicet$AÑO, na.rm = TRUE),
+                                                   max = max(conicet$AÑO, na.rm = TRUE),
+                                                   value = range(conicet$AÑO, na.rm = TRUE),
+                                                   width = "100%",
+                                                   sep = ""),
+                                       
+                                       p(HTML("")),
+                                       
+                                       shinyWidgets::pickerInput("disciplinaInput", 
+                                                                 "Disciplina:",
+                                                                 choices = unique(conicet$Nombre_comision),
+                                                                 selected = unique(conicet$Nombre_comision),
+                                                                 options = list(`actions-box` = TRUE),
+                                                                 multiple = TRUE,
+                                                                 width = "100%"
+                                       )
+                                     )
                                    ),
                                    
                                    
@@ -145,58 +143,36 @@ ui <-
                           )
                         ),
                         
-                        sidebarPanel(
-                          class = "full-panel",  # Añadir la clase para altura completa
-                          sliderInput("yearInput", "Seleccionar período de tiempo",
-                                      min = min(conicet$AÑO, na.rm = TRUE),
-                                      max = max(conicet$AÑO, na.rm = TRUE),
-                                      value = range(conicet$AÑO, na.rm = TRUE),
-                                      sep = ""),
-                          
-                          shinyWidgets::pickerInput("disciplinaInput", 
-                                                    "Seleccionar disciplina:", 
-                                                    choices = unique(conicet$Nombre_comision),
-                                                    selected = unique(conicet$Nombre_comision),
-                                                    options = list(`actions-box` = TRUE),
-                                                    multiple = TRUE,
-                          ),
-                          
-                          # Plot palabras clave
-                          uiOutput("plot_palabras_clave")  # Ajuste de altura sin scroll
-                        ),
                         
-                        mainPanel(
-                       
-                       
-                          fluidRow(
-                            
-                            #Barplot de 
-                            column(4, uiOutput("nubePalabras")),
-                            
-                            column(4, leafletOutput("mapa", height = "100vh")),  
-                            column(4, 
-                                   fluidRow(
-                                     column(12, plotOutput("graficoProyectosRegion", height = "50vh")),  
-                                     column(12, 
-                                            fluidRow(
-                                              column(12, 
-                                                     shinyWidgets::pickerInput("provincia_filter", "Seleccione una provincia:",
-                                                                               choices = c("Todas", unique(conicet$PROVINCIA)), 
-                                                                               selected = "Todas", 
-                                                                               options = list(`actions-box` = TRUE), 
-                                                                               multiple = TRUE)),  
-                                              column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))   
-                                            )
-                                     )
+                        fluidRow(
+                          
+                          #Barplot de 
+                          column(4, uiOutput("plot_palabras_clave")),
+                          
+                          column(4, leafletOutput("mapa", height = "100vh")),  
+                          column(4, 
+                                 fluidRow(
+                                   column(12, plotOutput("graficoProyectosRegion", height = "50vh")),  
+                                   column(12, 
+                                          fluidRow(
+                                            column(12, 
+                                                   shinyWidgets::pickerInput("provincia_filter", "Seleccione una provincia:",
+                                                                             choices = c("Todas", unique(conicet$PROVINCIA)), 
+                                                                             selected = "Todas", 
+                                                                             options = list(`actions-box` = TRUE), 
+                                                                             multiple = TRUE)),  
+                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))   
+                                          )
                                    )
-                            )
+                                 )
                           )
+                        )
                         # )
                       ),
-                     
-                     
-                     
-                     
+                      
+                      
+                      
+                      
                       
                       tags$footer(
                         HTML('<span style="font-size:12px;"><i>Autores: Florencia Altschuler, Federico Giovannetti, Fernando Steeb y Mariana Smulski. </i></span><br>
@@ -212,7 +188,7 @@ ui <-
              
              
              
-#### Pestaña de tabla con datos ####
+             #### Pestaña de tabla con datos ####
              
              
              tabPanel("Datos",
