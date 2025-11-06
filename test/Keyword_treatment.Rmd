@@ -1,0 +1,144 @@
+---
+title: "Keyword_treatment"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r, message=FALSE, warning=F}
+
+library(tidyverse)
+library(udpipe)
+library(stringdist)
+
+datos_conicet <- read.csv("../data/processed_data.csv") 
+
+```
+
+
+# ¿Cómo mejoramos el tratamiento de las keywords?
+
+Nuestro primer approach había sido inicialmente (creo), solo tener las palabras en minúscula y ya. Algo así:
+
+```{r}
+
+keyword_tokens <- ifelse(
+    grepl(",", datos_conicet$PALABRAS.CLAVE.PROYECTO),
+    stringr::str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO, pattern = ","),
+    stringr::str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO, pattern = fixed("|"))
+)
+
+
+keyword_tokens <- str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO,
+                            pattern = "[,|\\|]+") %>%  # Divido las kw por la coma o la pleca
+                                                       # (algunas dividen por una y otras por la otra)
+  unlist() %>% 
+  str_squish() %>%                                     # Saco espacios de más
+  tolower() 
+
+KW_sin_lemma <- nrow(table(keyword_tokens))
+
+```
+Esto nos daba un total de `r KW_sin_lemma` palabras clave distintas.
+
+Entendimos igual que había un monton de palabras similares que quizas aún no terminaban de quedar juntas por pequeñas diferencias. Entonces probamos la lemmatización (gracias Flor!). Que implica llevar todas las palabras de las KW a su mínima expresión pero manteniendo significado. Lo dicho mejoró bastante la cuestión respecto de como lo haciamos antes. Acá también incorporamos algunas cuestiones a mano como "niño" y "niña" que iban separados. O "escuela" y "escolar".
+
+```{r}
+
+source("../helper_code/lemmatization.R")
+
+KW_lemma <- nrow(normalizar_keywords(datos_conicet))
+
+```
+
+Ahora con la lematización, tenemos `r KW_lemma` palabras clave distintas. `r KW_sin_lemma - KW_lemma` menos que antes. 
+
+Creo que aún se puede mejorar así que tiro algunas puntas para adelante
+
+# Palabras clave compuestas
+
+Una cosa que me di cuenta es que hay palabras clave que tienen más de una palabra (que descubrimiento che, bravo!). Es decir, que la lemmatización capaz que nos rompe palabras clave que tienen un significado en conjunto con otras palabras. Por ej: "aprendizaje automático" es algo en si mismo y no tiene sentido que "aprendizaje" en términos de machine learning vaya junto con estudios sobre el aprendizaje escolar por ej.
+
+Entonces una cosa que pensé fue hacer la lemmatización solo con las palabras clave que tenga una sola palabra. Pero no me convence mucho. Ya que hay palabras compuestas como "aprendizaje escolar" que puede ser relevante tener la palabra aprendizaje aparte. Igualmente, dejo el approach para que no se pierda:
+
+
+```{r}
+
+
+keyword_tokens <- ifelse(
+        grepl(",", datos_conicet$PALABRAS.CLAVE.PROYECTO),
+        stringr::str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO, pattern = ","),
+        stringr::str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO, pattern = fixed("|"))
+)
+
+keyword_tokens <- str_split(datos_conicet$PALABRAS.CLAVE.PROYECTO,
+                            pattern = "[,|\\|]+") %>%  # Divido las kw por la coma o la pleca
+                                                       # (algunas dividen por una y otras por la otra)
+  unlist() %>% 
+  str_squish() %>%                                     # Saco espacios de más
+  tolower() %>%                                        # Convertir todo a minúsculas
+  eliminar_tildes() %>%                               # Eliminar tildes
+  na.omit()
+
+  
+#### Pruebo lematizar solo kw de una palabra
+
+# Lemmatizo las de una palabra
+one_word_kw <- keyword_tokens[str_count(keyword_tokens, '\\w+') == 1] %>%
+  lematiza_udpipe()
+
+# Mantengo igual las de más de 1 palabra
+phrase_kw <- keyword_tokens[str_count(keyword_tokens, '\\w+') != 1]
+
+# Junto todo
+tokenized_keywords <- c(one_word_kw, phrase_kw)
+
+
+
+# Agrupar las palabras relacionadas antes de contar las frecuencias
+
+tokenized_keywords <- gsub("niño|niña|niñez", "niñez", tokenized_keywords)
+
+tokenized_keywords <- gsub("adolescent|adolescente", "adolescencia", tokenized_keywords)
+tokenized_keywords <- gsub("escuela|escolar", "escuela", tokenized_keywords)
+tokenized_keywords <- gsub("educacional|educativa|educativo", "educacion", tokenized_keywords)
+tokenized_keywords <- gsub("alcoholismo|alcoholico", "alcohol", tokenized_keywords)
+tokenized_keywords <- gsub("respiratoria", "respiratorio", tokenized_keywords)
+tokenized_keywords <- gsub("familiar", "familia", tokenized_keywords)
+# tokenized_keywords
+  
+  # Convertir a data.frame para mejor visualización
+  frecuencia_df <- as.data.frame(table(tokenized_keywords))
+  frecuencia_df$tokenized_keywords <- as.character(frecuencia_df$tokenized_keywords)
+  
+  # Ver la tabla de frecuencias
+  colnames(frecuencia_df) <- c("palabra", "freq")
+  
+KW_separados_lemma <- nrow(frecuencia_df)
+
+```
+Ahora con esta lemmatización diferenciada, tenemos `r KW_separados_lemma` palabras clave distintas. `r KW_lemma - KW_separados_lemma` menos que antes. Lo cual no cambia practicamente nada. De hecho, KW compuestos como "metodos de aprendizaje automático" y "aprendizaje automático" siguen separadas.
+
+
+# Distancia de Levenshtein
+
+Esta es la última que pensé: sería la distancia de edición. Es decir, cuanto tengo que modificar una palabra para que se parezca a otra. Sería muy útil para casos como los de "niño" y "niña". Este es el codiguito que armé sacando de algun foro. Lo hice con las palabras ya lemmatizadas como para probar.
+
+```{r}
+
+# Compute Levenshtein distance matrix
+distance_matrix <- stringdistmatrix(frecuencia_df$palabra, method = "lv")
+
+# Perform hierarchical clustering
+hierarchical_clusters <- hclust(as.dist(distance_matrix))
+
+frecuencia_df$grupos_cluster <- cutree(
+  tree = hierarchical_clusters, 
+  h = 1 
+)
+
+KW_lev <- nrow(table(frecuencia_df$grupos_cluster))
+
+```
+
+Da `r KW_lev`, que es nuestro número más bajo. El problema es que me di cuenta que termina juntando palabras como "actitud" y "aptitud" que definitivamente representan cosas distintas.
+

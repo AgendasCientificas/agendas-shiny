@@ -144,6 +144,28 @@ ui <-
                             )
                           )
                         ),
+                        
+                        sidebarPanel(
+                          class = "full-panel",  # Añadir la clase para altura completa
+                          sliderInput("yearInput", "Seleccionar período de tiempo",
+                                      min = min(conicet$AÑO, na.rm = TRUE),
+                                      max = max(conicet$AÑO, na.rm = TRUE),
+                                      value = range(conicet$AÑO, na.rm = TRUE),
+                                      sep = ""),
+                          
+                          shinyWidgets::pickerInput("disciplinaInput", 
+                                                    "Seleccionar disciplina:", 
+                                                    choices = unique(conicet$Nombre_comision),
+                                                    selected = unique(conicet$Nombre_comision),
+                                                    options = list(`actions-box` = TRUE),
+                                                    multiple = TRUE,
+                          ),
+                          
+                          # Plot palabras clave
+                          uiOutput("plot_palabras_clave")  # Ajuste de altura sin scroll
+                        ),
+                        
+                        mainPanel(
                        
                        
                           fluidRow(

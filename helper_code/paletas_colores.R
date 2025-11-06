@@ -1,3 +1,7 @@
+
+# Obtener el segundo color de la paleta "Darjeeling2"
+color_fondo_titulo <- wes_palette("Darjeeling2")[2]
+
 paleta_colores_region <- function(region) {
   colores <- c(
     "CABA" = "#FF6666",

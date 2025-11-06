@@ -1,4 +1,7 @@
-# Cargar las librerías necesarias
+
+
+#### Librerías ####
+
 library(readr)
 library(tidyr)
 library(shiny)
@@ -13,56 +16,35 @@ library(geoAr)
 library(reactable)
 library(plotly)
 library(textstem)
-source("helper_code/paletas_colores.R")
 library(udpipe)
+source("helper_code/paletas_colores.R")
 
-# Descargar y cargar el modelo de lematización para español
-modelo_espanol <- udpipe_download_model(language = "spanish")
-modelo <- udpipe_load_model(modelo_espanol$file_model)
+
+#### Raw data ####
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
 conicet <- read.csv("data/processed_data.csv") 
 
-
-
 # Asegurarse de que no haya valores NA en las columnas 'AÑO' y 'TIPO.CONVOCATORIA'
 conicet <- conicet %>%
   filter(!is.na(AÑO), !is.na(TIPO.CONVOCATORIA), !is.na(lon), !is.na(lat), !is.na(Nombre_comision))
 
-# Reemplazar nombres de regiones según tu requerimiento
-# conicet$region <- ifelse(conicet$region == "Buenos Aires", "Buenos Aires",
-#                          ifelse(conicet$region == "CABA", "CABA",
-#                                 ifelse(conicet$region == "Resto del país", "Resto del país", "Desconocida")))
+#### Server ####
 
-
-# conicet <- conicet %>%
-#   mutate(region = case_when(
-#     region == "Buenos Aires" ~ "Buenos Aires",
-#     region == "CABA" ~ "CABA",
-#     region == "Región Centro" ~ "Región Centro",
-#     region == "Región Cuyo" ~ "Región Cuyo",
-#     region == "NOA" ~ "NOA",
-#     region == "NEA" ~ "NEA",
-#     region == "Patagonia" ~ "Patagonia",
-#     TRUE ~ "Desconocida"
-#   ))
-
-# Obtener el segundo color de la paleta "Darjeeling2"
-color_fondo_titulo <- wes_palette("Darjeeling2")[2]
-
-# Server---------------
 server <- function(input, output, session) {
   
-  
+  ##### filteredData ####
   
   # Filtrar los datos por año, tipo de proyecto y disciplina
   filteredData <- reactive({
     conicet %>%
       filter(AÑO >= input$yearInput[1], AÑO <= input$yearInput[2],  # Ajustar filtro de año para rango
              Nombre_comision %in% input$disciplinaInput)
-    # REGION != "Desconocida")  # Excluir "Desconocida"
   })
+  
+  
+  #### mapa ####
   
   output$mapa <- renderLeaflet({
     mapa_argentina <- get_geo("ARGENTINA", level = "provincia")
@@ -83,17 +65,13 @@ server <- function(input, output, session) {
   # Observación para actualizar el mapa según los datos filtrados
   observe({
     
-    # source("helper_code/paletas_colores.R")
-    
-    
-    # datos <- filteredData()
     datos <- filteredData() %>%
       group_by(LOCALIDAD, PROVINCIA, REGION, lon, lat) %>%
       summarise(count = n(), .groups = "drop")
     
-    # if (nrow(datos) > 0) {
+
     # Calcular el número total de proyectos después de aplicar filtros
-    total_proyectos <- sum(datos$count)  # Asegúrate de que 'count' es la columna que contiene los proyectos.
+    total_proyectos <- sum(datos$count) 
     
     leafletProxy("mapa", data = datos) %>%
       clearMarkers() %>%
@@ -109,59 +87,16 @@ server <- function(input, output, session) {
   })
   
   
-  output$nubePalabras <- renderUI({
+  #### Palabras clave ####
   
+  output$plot_palabras_clave <- renderUI({
   
-  
-  # Función para lematizar todas las palabras clave
-  
-  eliminar_tildes <- function(texto) {
-    texto <- chartr("áéíóúÁÉÍÓÚ", "aeiouAEIOU", texto)  # Eliminar tildes
-    return(texto)
-  }
-  
-
-  
-  lematiza_udpipe <- function(frase) {
-    # Procesar la frase usando el modelo
-    texto_analizado <- udpipe_annotate(modelo, x = frase)
-    texto_analizado <- as.data.frame(texto_analizado)
+  # Implemento la lemmatización
     
-    # Retornar solo las palabras lematizadas
-    return(texto_analizado$lemma)
-  }
-  # Convertir las palabras clave a minúsculas y eliminar tildes
-  palabras_clave  <- conicet$PALABRAS.CLAVE.PROYECTO %>%
-    tolower() %>%               # Convertir todo a minúsculas
-    eliminar_tildes()           # Eliminar tildes
-  texto_completo <- paste(na.omit(palabras_clave), collapse = " ")
-  texto_completo <- lematiza_udpipe(texto_completo)
-  # Agrupar las palabras manualmente 
-  texto_completo <- gsub("niña|niño", "niñez", texto_completo)
-  # Agrupar las palabras relacionadas antes de contar las frecuencias
-  texto_completo <- gsub("adolescent|adolescente", "adolescencia", texto_completo)
-  texto_completo <- gsub("educacional|educativa|educativo", "educacion", texto_completo)
-  texto_completo <- gsub("alcoholismo|alcoholico", "alcohol", texto_completo)
-  texto_completo <- gsub("respiratoria", "respiratorio", texto_completo)
-  texto_completo <- gsub("familiar", "familia", texto_completo)
-  texto_completo
+  source("helper_code/lemmatization.R")
   
-  eliminar <- c("|", "el", "en", "a", "de", "por", "para", NA, "t", "y", ")", "(",
-                "b","1", "2", "3","4",  "d", "c", "no", ",", ".","-", "con")
-  
-  # Filtrar las palabras de 'texto_completo' que no estén en 'eliminar'
-  texto_completo <- texto_completo[!texto_completo %in% eliminar]
-  
-  # Convertir a data.frame para mejor visualización
-  frecuencia_df <- as.data.frame(table(texto_completo))
-  frecuencia_df$texto_completo <- as.character(frecuencia_df$texto_completo)
-  
-  # Ver la tabla de frecuencias
-  colnames(frecuencia_df) <- c("palabra", "freq")
-  
-  # Crear dataframe con los lemas y su frecuencia
-  
-  
+  frecuencia_df <- normalizar_keywords(conicet)
+
   # Filtrar las 20 palabras más frecuentes
   nube_filtrada <- head(frecuencia_df[order(frecuencia_df$freq, decreasing = TRUE), ], 20)
   
@@ -195,13 +130,11 @@ server <- function(input, output, session) {
       height = 700
     )
   
-  # Mostrar el gráfico
-  barplot_output
-  
   })
   
   
-  # Renderizar gráfico de "Proyectos a lo largo del tiempo"
+  #### Proyectos tiempo ####
+  
   output$graficoProyectosTiempo <- renderPlot({
     # Filtrar datos por provincias seleccionadas, considerando "Todas"
     provincias_seleccionadas <- if ("Todas" %in% input$provincia_filter) {
@@ -236,15 +169,13 @@ server <- function(input, output, session) {
                 show.legend = FALSE)  # Etiquetas de puntos
   })
   
-  # Renderizar gráfico de "Proyectos por región"
+  
+  #### Proyectos región ####
+  
   output$graficoProyectosRegion <- renderPlot({
     datos_region <- filteredData() %>%
       group_by(REGION) %>%
       summarise(total_proyectos = n())
-    
-    # Reordenar las regiones para que queden descendentes
-    # datos_region <- datos_region %>%
-    #   mutate(region = reorder(region, total_proyectos)) 
     
     datos_region %>%
       mutate(REGION = reorder(REGION, total_proyectos)) %>% 
@@ -253,7 +184,6 @@ server <- function(input, output, session) {
       geom_bar(stat = "identity") +
       labs(title = "Proyectos por región", x = "", y = "") +  # Quitar nombre ejes y cambiar título
       scale_fill_manual(values = colores_regiones) +
-      # scale_fill_manual(values = c("Buenos Aires" = "#00A08A", "CABA" = "#5BBCD6", "Resto del país" = "#F2AD00")) +
       theme_minimal() +
       theme(plot.title = element_text(size = 18,face = "bold", hjust = 0.5),
             axis.text.x = element_text(size = 14),  
@@ -264,7 +194,7 @@ server <- function(input, output, session) {
       coord_flip()
   })
   
-  # Tabla de datos
+  ##### Tabla de datos ####
   output$data <- renderReactable({
     # Configurar las opciones de la tabla
     options(reactable.theme = reactableTheme(
