@@ -12,12 +12,21 @@ library(shinyWidgets)
 library(geoAr) 
 library(reactable)
 library(plotly)
+library(DT)
 source("helper_code/paletas_colores.R")
 
 
 # Esta ruta es una ruta relativa que funciona igual en cualquier compu (o debería ja)
 
 conicet <- read.csv("data/processed_data.csv") 
+
+# match-sorter library dependency. Include this anywhere in your document or app.
+matchSorterDep <- htmlDependency(
+  "match-sorter", 
+  "1.8.0",
+  c(href = "https://unpkg.com/match-sorter@1.8.0/dist/umd/"),
+  script = "match-sorter.min.js"
+)
 
 #UI---------------------
 ui <- 
@@ -192,12 +201,65 @@ ui <-
              
              
              tabPanel("Datos",
-                      HTML("<h2 style='font-size: 20px; font-weight: bold; color: #046C9A;'>Acá vas a poder acceder a los datos completos...</h2>"),
-                      fluidPage(
-                        tags$style(HTML("
-      .reactable { font-size: 10px; }
-    ")),
-                        reactableOutput("data")
-                      )
+                      
+                      tags$style(
+                        HTML("
+                              @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+                              
+                              .mi-titulo-h2 {
+                              font-family: 'Montserrat', sans-serif;
+                              font-weight: bold;
+                              font-size: 22px;
+                              }
+                              
+                             .reactable {
+                             font-family: 'Montserrat', sans-serif;
+                             font-weight: 550;
+                             font-size: 10px; 
+                             }"
+                             )
+                      ),
+                      
+                      fluidRow(
+                        
+                        column(4, 
+                               HTML("<h2 class='mi-titulo-h2'>Visualización de la tabla de datos</h2>"),
+                               
+                               HTML("En esta pestaña, podrás explorar la tabla de datos utilizada en el dashboard.<br>
+                               
+                                    En el buscador de abajo podrás explorar palabras en toda la tabla,
+                                    o también podes utilizar el buscador incluido en cada columna.
+                                    Además, cada columna puede ser ordenada en forma ascendente o descendente.")
+                               
+                        ),
+                        
+                        column(8, 
+                               
+                               div(style = "height: 100px;"),
+                               
+                               actionButton("reset_sort", "Resetear tabla"),
+                               
+                        ),
+                        
+                        
+                      ),
+                      
+                      
+                      
+                      
+
+                      hr(),
+                      
+                      
+                      
+                      tags$style(HTML(".reactable { font-size: 10px; }")),
+                      
+                      matchSorterDep,
+                      
+                      reactableOutput("data")
+                      
+                      
+
              )
+    
   )

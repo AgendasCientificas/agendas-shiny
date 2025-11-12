@@ -17,6 +17,8 @@ library(reactable)
 library(plotly)
 library(textstem)
 library(udpipe)
+library(DT)
+library(htmltools)
 source("helper_code/paletas_colores.R")
 
 
@@ -206,19 +208,31 @@ server <- function(input, output, session) {
       )+
       coord_flip()
   })
-  
-  ##### Tabla de datos ####
+
+  #### Tabla de datos ####
   output$data <- renderReactable({
     # Configurar las opciones de la tabla
     options(reactable.theme = reactableTheme(
-      borderColor = "#dfe2e5",
-      stripedColor = "#f6f8fa",
-      highlightColor = "#f0f5f9",
-      cellPadding = "8px 12px",
-      style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"),
-      searchInputStyle = list(width = "100%")
+      color = "black",
+      headerStyle = list(
+        "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+        "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 80%, 96%)"),
+        "& .Reactable-header-sort-icon path" = list(fill = "blue"),
+        borderColor = "#555",
+        color = "black",
+        fontWeight = "bold",
+        fontSize = 10
+      ),
+      
+      # style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"),
+      searchInputStyle = list(width = "100%",
+                              borderColor = "#bababa",
+                              color = "black")
     ))
     
+    
+    # theme = reactableTheme(
+
     # Configurar el idioma de la tabla
     options(reactable.language = reactableLang(
       searchPlaceholder = "Buscar",
@@ -228,34 +242,67 @@ server <- function(input, output, session) {
       pageNext = "\u276f"
     ))
     
-    # Renderizar la tabla
-    reactable(
-      conicet %>% 
-        select(CONVOCATORIA, NOMBRE.POSTULANTE, DISCIPLINA.CODIGO,
-               LT.POSTULANTE, DIRECTOR, TITULO.PROYECTO, RESUMEN.PROYECTO,
-               PALABRAS.CLAVE.PROYECTO, ESPECIALIDAD.REFERIDA, PAIS, REGION, PROVINCIA, LOCALIDAD),
-      filterable = TRUE, 
-      minRows = 10, 
-      searchable = TRUE,
-      defaultPageSize = 10,
-      bordered = TRUE,
-      highlight = TRUE,
-      striped = TRUE,
-      # Set table height to ensure scrolling and sticky headers
-      style = list(height = "calc(105vh - 150px)"),  # Ajustar 150px para otros elementos UI
-      defaultColDef = colDef(
-        headerStyle = list(
-          position = "sticky",
-          top = 0,
-          zIndex = 1,
-          borderBottom = "2px solid #ddd"
-        ),
-        minWidth = 150
-      ),
-      columns = list(
-        RESUMEN.PROYECTO = colDef(minWidth = 800),
-        TITULO.PROYECTO = colDef(minWidth = 200)
+
+    
+    # Fuzzy search method based on match-sorter
+    # See https://github.com/kentcdodds/match-sorter for advanced customization
+    matchSorterSearchMethod <-  JS("function(rows, columnIds, searchValue) {
+                                    const keys = columnIds.map(function(id) {
+                                    return function(row) {
+                                    return row.values[id]
+                                    }
+                                    })
+                                    return matchSorter(rows, searchValue, { keys: keys })
+                                    }")
+    
+
+      
+      reactable(
+        conicet %>%
+        select(Año = AÑO, Convocatoria = TIPO.CONVOCATORIA, Comisión = Nombre_comision,
+               Postulante = NOMBRE.POSTULANTE, 'Lugar de trabajo' = LT.POSTULANTE, 
+               'Director/a' = DIRECTOR, 'Título del proyecto' =  TITULO.PROYECTO,
+               Resumen = RESUMEN.PROYECTO, 'Palabras clave' = PALABRAS.CLAVE.PROYECTO,
+               Especialidad = ESPECIALIDAD.REFERIDA, Región = REGION, Provincia = PROVINCIA, Localidad = LOCALIDAD),
+        searchable = TRUE,
+        searchMethod = matchSorterSearchMethod,
+        defaultPageSize = 5,
+        filterable = TRUE, 
+        # minRows = 10,
+        # bordered = TRUE,
+        highlight = TRUE,
+        striped = TRUE,
+        
+        showSortable = TRUE,
+            # Inmovilizar header
+            style = list(height = "calc(105vh - 150px)"),  # Ajustar 150px para otros elementos UI
+            defaultColDef = colDef(
+              headerStyle = list(
+                position = "sticky",
+                top = 0,
+                zIndex = 1
+              ),
+              minWidth = 150
+            ),
+            columns = list(
+              Año = colDef(maxWidth = 50, style = list(fontSize = 12)),
+              Convocatoria = colDef(style = list(fontSize = 12)),
+              Comisión = colDef(style = list(fontSize = 12), maxWidth = 100),
+              # Comisión = colDef(),
+              'Lugar de trabajo' = colDef(minWidth = 200),
+              Resumen = colDef(minWidth = 800),
+              'Título del proyecto' = colDef(minWidth = 200)
+            )
       )
-    )
+
   })
+  
+  observeEvent(input$reset_sort, {
+    
+    updateReactable("data", sorted = NA)
+    
+  })
+  
+  
+  
 }
