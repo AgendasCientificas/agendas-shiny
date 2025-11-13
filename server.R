@@ -113,7 +113,7 @@ server <- function(input, output, session) {
   # frecuencia_df <- normalizar_keywords(conicet)
 
   # Filtrar las 20 palabras más frecuentes
-  nube_filtrada <- head(frecuencia_df[order(frecuencia_df$freq, decreasing = TRUE), ], 20)
+  nube_filtrada <- head(frecuencia_df[order(frecuencia_df$freq, decreasing = TRUE), ], 15)
   
   # Definir la paleta de colores (de oscuro a claro)
   colores <- c("#f39c12", "#e67e22", "#d35400", "#e74c3c", "#c0392b")
@@ -131,7 +131,7 @@ server <- function(input, output, session) {
   barplot_output <- plot_ly(nube_filtrada, x = ~freq, 
                             y = ~reorder(palabra, freq),  # Reordenar palabras por frecuencia
                             type = "bar", orientation = "h",
-                            marker = list(color = nube_filtrada$color)) %>%
+                            marker = list(color = nube_filtrada$color)) %>% 
     layout(
       xaxis = list(title = ""),
       yaxis = list(title = "", tickfont = list(size = 16), standoff = 20, automargin = TRUE),
@@ -143,7 +143,8 @@ server <- function(input, output, session) {
       ),
       margin = list(l = 150),  # Aumentar margen izquierdo para separar más las palabras del eje
       height = 700
-    )
+    ) %>% 
+    config(displayModeBar = FALSE)
   
   })
   
@@ -211,6 +212,10 @@ server <- function(input, output, session) {
 
   #### Tabla de datos ####
   output$data <- renderReactable({
+    
+    # input$reset_sort
+    
+    
     # Configurar las opciones de la tabla
     options(reactable.theme = reactableTheme(
       color = "black",
@@ -294,14 +299,13 @@ server <- function(input, output, session) {
               'Título del proyecto' = colDef(minWidth = 200)
             )
       )
+      
 
   })
   
-  observeEvent(input$reset_sort, {
-    
-    updateReactable("data", sorted = NA)
-    
-  })
+
+  
+
   
   
   

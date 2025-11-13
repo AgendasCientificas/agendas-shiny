@@ -13,6 +13,8 @@ library(geoAr)
 library(reactable)
 library(plotly)
 library(DT)
+library(htmltools)
+
 source("helper_code/paletas_colores.R")
 
 
@@ -105,7 +107,7 @@ ui <-
                                      
                                      div(
                                        style = 'height: 100%;font-size: 18px; text-align: justify; background-color: #e1f7f7; padding: 10px; border-radius: 5px; margin: 15px 5px;', 
-                                       p(HTML("Basándonos en las bases de datos recopiladas, analizamos el comportamiento de las becas e ingresos 
+                                       p(HTML("Basándonos en bases de datos recopiladas a partir de pedidos de Acceso a la Información, analizamos el comportamiento de las becas e ingresos 
                                      otorgados por organismo en el periodo 2010-2020 a candidatos y candidatas con temas vinculados al desarrollo Niños, 
                                      Niñas y Adolescentes considerando asimismo su distribución geográfica y disciplinar. 
                                             Estos resultados fueron publicados en el año 2024 en la revista Iberoamericana de Ciencia, Tecnología y Sociedad (Smulski, et al. 2024).")),
@@ -130,6 +132,9 @@ ui <-
                                                    min = min(conicet$AÑO, na.rm = TRUE),
                                                    max = max(conicet$AÑO, na.rm = TRUE),
                                                    value = range(conicet$AÑO, na.rm = TRUE),
+                                                   step = 1,
+                                                   ticks = TRUE,
+                                                   animate = FALSE,
                                                    width = "100%",
                                                    sep = ""),
                                        
@@ -188,7 +193,7 @@ ui <-
         <span style="font-size:12px;">Datos obtenidos de <a href="https://ojs.revistacts.net/index.php/CTS/article/view/410" target="_blank";"><i>Smulski, M., Giovannetti, F., Steeb, F., Serra, A. L. P., Grasser, F. B., Jove, G. M., & Cevasco, J. (2024). Agendas científicas sobre desarrollo infantil en CONICET: Evolución de becas e ingresos de investigadores en el periodo 2010-2020. Revista Iberoamericana de Ciencia, Tecnología y Sociedad</i></a> - CTS.</span><br>
         <span style="font-size:12px;">El código fuente de este tablero está disponible en nuestro <a href="https://github.com/AgendasCientificas" target="_blank";">repositorio de GitHub</a>.</span>'),
                         align = "left",
-                        style = "width:100%; padding:10px; background-color:#f0f5f9;"
+                        style = "width:100%; padding:100px; background-color:#f0f5f9;"
                       )
                       
                       
@@ -222,24 +227,24 @@ ui <-
                       
                       fluidRow(
                         
-                        column(4, 
+                        column(10, 
                                HTML("<h2 class='mi-titulo-h2'>Visualización de la tabla de datos</h2>"),
                                
                                HTML("En esta pestaña, podrás explorar la tabla de datos utilizada en el dashboard.<br>
                                
                                     En el buscador de abajo podrás explorar palabras en toda la tabla,
-                                    o también podes utilizar el buscador incluido en cada columna.
+                                    o utilizar el buscador incluido en cada columna.
                                     Además, cada columna puede ser ordenada en forma ascendente o descendente.")
                                
                         ),
                         
-                        column(8, 
-                               
-                               div(style = "height: 100px;"),
-                               
-                               actionButton("reset_sort", "Resetear tabla"),
-                               
-                        ),
+                        # column(8, 
+                        #        
+                        #        div(style = "height: 100px;"),
+                        #        
+                        #        actionButton("reset_sort", "Resetear tabla"),
+                        #        
+                        # ),
                         
                         
                       ),
