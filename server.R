@@ -2,22 +2,6 @@
 
 #### Librerías ####
 
-library(readr)
-library(tidyr)
-library(shiny)
-library(leaflet)
-library(dplyr)
-library(ggplot2)
-library(tm)
-library(wordcloud2)
-library(wesanderson)
-library(shinyWidgets)
-library(geoAr) 
-library(reactable)
-library(plotly)
-library(textstem)
-library(udpipe)
-source("helper_code/paletas_colores.R")
 
 
 #### Raw data ####
@@ -28,7 +12,16 @@ conicet <- read.csv("data/processed_data.csv")
 
 # Asegurarse de que no haya valores NA en las columnas 'AÑO' y 'TIPO.CONVOCATORIA'
 conicet <- conicet %>%
-  filter(!is.na(AÑO), !is.na(TIPO.CONVOCATORIA), !is.na(lon), !is.na(lat), !is.na(Nombre_comision))
+  filter(
+    !is.na(AÑO), 
+    !is.na(TIPO.CONVOCATORIA), 
+    !is.na(lon), 
+    !is.na(lat), 
+    !is.na(Nombre_comision),
+    !is.na(REGION),         
+    !is.na(PROVINCIA),      
+    REGION != "Otra región" 
+  )
 
 #### Server ####
 
@@ -145,43 +138,94 @@ server <- function(input, output, session) {
   
   })
   
+  #### Proyectos tiempo ####
   
   #### Proyectos tiempo ####
   
   output$graficoProyectosTiempo <- renderPlot({
-    # Filtrar datos por provincias seleccionadas, considerando "Todas"
-    provincias_seleccionadas <- if ("Todas" %in% input$provincia_filter) {
-      unique(conicet$PROVINCIA)  # Si "Todas" está seleccionada, incluye todas las provincias
+    
+    provincias_seleccionadas <- input$provincia_filter
+    
+    # Si el switch está en "Agrupado (Total)" (TRUE)
+    if (input$agrupar_grafico) {
+      
+      # --- INICIO DE NUEVA LÓGICA DE COLOR ---
+      
+      # 1. Encontrar las regiones únicas de las provincias seleccionadas
+      #    Usamos el 'conicet' cargado al inicio del server
+      regiones_seleccionadas <- conicet %>%
+        filter(PROVINCIA %in% provincias_seleccionadas) %>%
+        select(REGION) %>%
+        distinct() %>%
+        pull()
+      
+      n_regiones <- length(regiones_seleccionadas)
+      
+      # 2. Definir el color
+      if (n_regiones == 1) {
+        # Si es 1, tomar el color de la paleta 'colores_regiones'
+        # (Asumimos que 'colores_regiones' es un vector/lista nombrado, ej: colores_regiones["Patagonia"])
+        color_linea <- colores_regiones[regiones_seleccionadas[1]]
+      } else {
+        # Si son 0 o más de 1, usar un color neutral
+        color_linea <- "blue"
+      }
+      # --- FIN DE LÓGICA DE COLOR ---
+      
+      
+      datos_tiempo <- filteredData() %>%
+        filter(PROVINCIA %in% provincias_seleccionadas) %>%
+        group_by(AÑO) %>%
+        summarise(total_proyectos = n())
+      
+      max_y <- ifelse(length(datos_tiempo$total_proyectos) > 0, max(datos_tiempo$total_proyectos, na.rm = TRUE), 0)
+      
+      ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos)) +
+        # --- USAMOS LA VARIABLE DE COLOR ---
+        geom_line(color = color_linea, size = 1) +
+        geom_point(size = 3, color = color_linea) +
+        # ---
+        labs(title = "Proyectos por año (Total)", x = "", y = "") + 
+        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
+        scale_y_continuous(limits = c(0, max_y * 1.1)) + # Damos 10% de espacio
+        theme_minimal() +
+        theme(
+          plot.title = element_text(size = 18,face = "bold", hjust = 0.5), 
+          axis.text.x = element_text(size = 12), 
+          axis.text.y = element_text(size = 12)  
+        ) +
+        geom_text(aes(label = total_proyectos), 
+                  vjust = -0.5, 
+                  size = 4, 
+                  show.legend = FALSE) 
+      
     } else {
-      input$provincia_filter  # O incluye las provincias seleccionadas
+      # Si está en "Por Provincia" (FALSE), creamos el gráfico desagrupado
+      # (Esta parte no se modifica)
+      
+      datos_tiempo <- filteredData() %>%
+        filter(PROVINCIA %in% provincias_seleccionadas) %>%
+        group_by(AÑO, PROVINCIA) %>% # Agrupamos por PROVINCIA
+        summarise(total_proyectos = n(), .groups = "drop")
+      
+      max_y <- ifelse(length(datos_tiempo$total_proyectos) > 0, max(datos_tiempo$total_proyectos, na.rm = TRUE), 0)
+      
+      ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos, color = PROVINCIA, group = PROVINCIA)) + 
+        geom_line(size = 1) +
+        geom_point(size = 2) + 
+        labs(title = "Proyectos por año y provincia", x = "", y = "") + 
+        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
+        scale_y_continuous(limits = c(0, max_y * 1.1)) + 
+        
+        theme_minimal() +
+        theme(
+          plot.title = element_text(size = 18,face = "bold", hjust = 0.5),
+          axis.text.x = element_text(size = 12), 
+          axis.text.y = element_text(size = 12),
+          legend.position = "bottom" 
+        )
     }
-    
-    datos_tiempo <- filteredData() %>%
-      filter(PROVINCIA %in% provincias_seleccionadas) %>%
-      group_by(AÑO) %>%
-      summarise(total_proyectos = n())
-    
-    max_y <- max(datos_tiempo$total_proyectos, na.rm = TRUE)  # Obtener el valor máximo
-    
-    ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos)) +
-      geom_line(color = "blue", size = 1) +
-      geom_point(size = 3, color = "blue") +
-      labs(title = "Proyectos por año", x = "", y = "") +  # Título del gráfico
-      scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO), max(datos_tiempo$AÑO), by = 2)) +  # Mostrar cada dos años
-      scale_y_continuous(limits = c(0, max_y)) +  # Limitar el eje Y
-      theme_minimal() +
-      theme(
-        plot.title = element_text(size = 18,face = "bold", hjust = 0.5),  # Ajustar tamaño del título
-        axis.text.x = element_text(size = 12),  # Ajustar tamaño de fuente en eje X
-        axis.text.y = element_text(size = 12)   # Ajustar tamaño de fuente en eje Y
-      ) +
-      geom_text(aes(label = total_proyectos), 
-                nudge_y = -8,  # Mueve las etiquetas hacia arriba (ajusta el valor según tu gráfico)
-                vjust = -0.5, 
-                size = 4, 
-                show.legend = FALSE)  # Etiquetas de puntos
   })
-  
   
   #### Proyectos región ####
   
@@ -259,3 +303,4 @@ server <- function(input, output, session) {
     )
   })
 }
+
