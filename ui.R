@@ -22,6 +22,21 @@ source("helper_code/paletas_colores.R")
 
 conicet <- read.csv("data/processed_data.csv") 
 
+conicet <- conicet %>%
+  filter(
+    !is.na(REGION), 
+    !is.na(PROVINCIA), 
+    REGION != "Otra región"
+  )
+
+# 1. Crear el mapa de Región -> Provincia
+prov_region_map <- conicet %>%
+  select(REGION, PROVINCIA) %>%
+  distinct() %>%
+  arrange(REGION, PROVINCIA)
+
+# 2. Crear la lista agrupada (nombrada) para el pickerInput
+lista_provincias_agrupada <- split(prov_region_map$PROVINCIA, prov_region_map$REGION)
 # match-sorter library dependency. Include this anywhere in your document or app.
 matchSorterDep <- htmlDependency(
   "match-sorter", 
@@ -166,16 +181,38 @@ ui <-
                           column(4, leafletOutput("mapa", height = "100vh")),  
                           column(4, 
                                  fluidRow(
-                                   column(12, plotOutput("graficoProyectosRegion", height = "50vh")),  
                                    column(12, 
                                           fluidRow(
-                                            column(12, 
-                                                   shinyWidgets::pickerInput("provincia_filter", "Seleccione una provincia:",
-                                                                             choices = c("Todas", unique(conicet$PROVINCIA)), 
-                                                                             selected = "Todas", 
-                                                                             options = list(`actions-box` = TRUE), 
-                                                                             multiple = TRUE)),  
-                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))   
+                                            column(12,
+                                                   
+                                                   # <--- 1. AÑADIMOS UN SWITCH PARA AGRUPAR/DESAGRUPAR ---->
+                                                   radioButtons("agrupar_grafico",
+                                                                label = "Modo de visualización:",
+                                                                choices = list(
+                                                                  "Total" = TRUE,
+                                                                  "Por Provincia" = FALSE
+                                                                ),
+                                                                selected = TRUE, # Inicia en "Total"
+                                                                inline = TRUE # Los pone en horizontal
+                                                   ),
+                                                   
+                                                   shinyWidgets::pickerInput(
+                                                     "provincia_filter", 
+                                                     "Seleccione una/s provincia/s para ver la cantidad de proyectos según el período seleccionado",
+                                                     choices = lista_provincias_agrupada, 
+                                                     selected = unique(conicet$PROVINCIA), 
+                                                     
+                                                     options = list(
+                                                       `actions-box` = TRUE,
+                                                       `select-all-text` = "Seleccionar Todo",
+                                                       `deselect-all-text` = "Deseleccionar Todo"
+                                                     ), 
+                                                     
+                                                     multiple = TRUE,
+                                                     width = "100%"
+                                                   )
+                                            ),
+                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))
                                           )
                                    )
                                  )
@@ -266,5 +303,5 @@ ui <-
                       
 
              )
-    
   )
+
