@@ -183,6 +183,7 @@ ui <-
                                  fluidRow(
                                    column(12, 
                                           fluidRow(
+                                            column(12, plotOutput("graficoProyectosRegion", height = "50vh")), 
                                             column(12,
                                                    
                                                    # <--- 1. AÑADIMOS UN SWITCH PARA AGRUPAR/DESAGRUPAR ---->
