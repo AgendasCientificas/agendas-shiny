@@ -10,6 +10,7 @@ El artículo original puede leerse [aquí](https://ojs.revistacts.net/index.php/
 
 Aquí presentamos un tablero interactivo que pone a disposición la información recopilada, sistematizada y analizada en dicha publicación con el fin de facilitar el acceso a la información.
 
+[https://agendascientificas.shinyapps.io/Desarrollo_infantil/](https://agendascientificas.shinyapps.io/Desarrollo_infantil/)
 
 ## Organización del Repo
 Este repositorio contiene un tablero interactivo que proporciona información valiosa sobre proyectos financiados en el área del desarrollo infantil. El tablero se ha desarrollado con el objetivo de fomentar redes de trabajo, colaboración y diálogo entre quienes investigan en este campo. La estructura del repositorio es la siguiente:
