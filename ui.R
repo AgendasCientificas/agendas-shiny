@@ -182,51 +182,51 @@ ui <-
                           # Columna de la derecha con gráficos y filtros
                           column(4, 
                                  fluidRow(
+                                   # 1. GRÁFICO DE PROYECTOS POR REGIÓN (ARRIBA)
+                                   column(12, plotOutput("graficoProyectosRegion", height = "40vh")), 
+                                   
+                                   # 2. SELECTOR DE PROVINCIAS (PARA GRÁFICO DE PROYECTOS POR AÑO)
                                    column(12, 
-                                          fluidRow(
-                                            # 1. GRÁFICO DE PROYECTOS POR REGIÓN (ARRIBA)
-                                            column(12, plotOutput("graficoProyectosRegion", height = "50vh")), 
-                                            
-                                            # 2. SELECTOR DE PROVINCIAS
-                                            column(12, 
-                                                   shinyWidgets::pickerInput(
-                                                     "provincia_filter", 
-                                                     "Seleccione una/s provincia/s para ver la cantidad de proyectos según el período seleccionado",
-                                                     choices = lista_provincias_agrupada, 
-                                                     selected = unique(conicet$PROVINCIA), 
-                                                     options = list(
-                                                       `actions-box` = TRUE,
-                                                       `select-all-text` = "Seleccionar todo",
-                                                       `deselect-all-text` = "Vaciar selección"
-                                                     ), 
-                                                     multiple = TRUE,
-                                                     width = "100%"
-                                                   )
-                                            ),
-                                            
-                                            # 3. SELECTOR DE MODO DE VISUALIZACIÓN
-                                            column(12,
-                                                   radioButtons("agrupar_grafico",
-                                                                label = "Modo de visualización:",
-                                                                choices = list(
-                                                                  "Total" = TRUE,
-                                                                  "Por Provincia" = FALSE
-                                                                ),
-                                                                selected = TRUE, 
-                                                                inline = TRUE
-                                                   )
-                                            ),
-                                            
-                                            # 4. GRÁFICO DE PROYECTOS POR AÑO (ABAJO)
-                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))                                          )
+                                          shinyWidgets::pickerInput(
+                                            "provincia_filter", 
+                                            "Seleccione una/s provincia/s para ver la cantidad de proyectos según el período seleccionado",
+                                            choices = lista_provincias_agrupada, 
+                                            selected = unique(conicet$PROVINCIA), 
+                                            options = list(
+                                              `actions-box` = TRUE,
+                                              `select-all-text` = "Seleccionar Todo",
+                                              `deselect-all-text` = "Deseleccionar Todo",
+                                              `liveSearch` = TRUE,
+                                              `noneResultsText` = "No se encontraron resultados"
+                                            ), 
+                                            multiple = TRUE,
+                                            width = "100%"
+                                          )
+                                   ),
+                                   
+                                   # 3 y 4. PANEL INTEGRADO: SELECTOR DE MODO + GRÁFICO DE TIEMPO
+                                   column(12,
+                                          div(style = "background-color: #ffffff; border: 1px solid #e3e3e3; border-radius: 8px; padding: 15px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);",
+                                              # Selector de modo dentro del panel (arriba del gráfico)
+                                              div(style = "text-align: center; margin-bottom: 10px;",
+                                                  radioButtons("agrupar_grafico",
+                                                               label = "Modo de visualización de proyectos por año:",
+                                                               choices = list(
+                                                                 "Total" = TRUE,
+                                                                 "Por Provincia" = FALSE
+                                                               ),
+                                                               selected = TRUE, 
+                                                               inline = TRUE
+                                                  )
+                                              ),
+                                              # El gráfico dentro del mismo panel
+                                              plotOutput("graficoProyectosTiempo", height = "40vh")
+                                          )
                                    )
                                  )
                           )
                         )
-                        # )
                       ),
-                      
-                      
                       
                       
                       
