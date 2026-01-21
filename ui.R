@@ -177,44 +177,48 @@ ui <-
                           
                           #Barplot de 
                           column(4, uiOutput("plot_palabras_clave")),
-                          
+                          # Mapa
                           column(4, leafletOutput("mapa", height = "100vh")),  
+                          # Columna de la derecha con gráficos y filtros
                           column(4, 
                                  fluidRow(
                                    column(12, 
                                           fluidRow(
+                                            # 1. GRÁFICO DE PROYECTOS POR REGIÓN (ARRIBA)
                                             column(12, plotOutput("graficoProyectosRegion", height = "50vh")), 
+                                            
+                                            # 2. SELECTOR DE PROVINCIAS
+                                            column(12, 
+                                                   shinyWidgets::pickerInput(
+                                                     "provincia_filter", 
+                                                     "Seleccione una/s provincia/s para ver la cantidad de proyectos según el período seleccionado",
+                                                     choices = lista_provincias_agrupada, 
+                                                     selected = unique(conicet$PROVINCIA), 
+                                                     options = list(
+                                                       `actions-box` = TRUE,
+                                                       `select-all-text` = "Seleccionar todo",
+                                                       `deselect-all-text` = "Vaciar selección"
+                                                     ), 
+                                                     multiple = TRUE,
+                                                     width = "100%"
+                                                   )
+                                            ),
+                                            
+                                            # 3. SELECTOR DE MODO DE VISUALIZACIÓN
                                             column(12,
-                                                   
-                                                   # <--- 1. AÑADIMOS UN SWITCH PARA AGRUPAR/DESAGRUPAR ---->
                                                    radioButtons("agrupar_grafico",
                                                                 label = "Modo de visualización:",
                                                                 choices = list(
                                                                   "Total" = TRUE,
                                                                   "Por Provincia" = FALSE
                                                                 ),
-                                                                selected = TRUE, # Inicia en "Total"
-                                                                inline = TRUE # Los pone en horizontal
-                                                   ),
-                                                   
-                                                   shinyWidgets::pickerInput(
-                                                     "provincia_filter", 
-                                                     "Seleccione una/s provincia/s para ver la cantidad de proyectos según el período seleccionado",
-                                                     choices = lista_provincias_agrupada, 
-                                                     selected = unique(conicet$PROVINCIA), 
-                                                     
-                                                     options = list(
-                                                       `actions-box` = TRUE,
-                                                       `select-all-text` = "Seleccionar todo",
-                                                       `deselect-all-text` = "Vaciar selección"
-                                                     ), 
-                                                     
-                                                     multiple = TRUE,
-                                                     width = "100%"
+                                                                selected = TRUE, 
+                                                                inline = TRUE
                                                    )
                                             ),
-                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))
-                                          )
+                                            
+                                            # 4. GRÁFICO DE PROYECTOS POR AÑO (ABAJO)
+                                            column(12, plotOutput("graficoProyectosTiempo", height = "50vh"))                                          )
                                    )
                                  )
                           )

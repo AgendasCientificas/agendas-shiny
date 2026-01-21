@@ -158,19 +158,22 @@ server <- function(input, output, session) {
   })
   
   #### Proyectos tiempo ####
+
+  #### Proyectos tiempo ####
   
   output$graficoProyectosTiempo <- renderPlot({
     
-    # Filtrar datos por provincias seleccionadas, considerando "Todas"
     provincias_seleccionadas <- input$provincia_filter
+    
+    # 1. VALIDACIÓN: Si no hay provincias seleccionadas, mostrar gráfico vacío y evitar el error
+    if (length(provincias_seleccionadas) == 0) {
+      return(ggplot() + theme_void() + labs(title = "Seleccione al menos una provincia"))
+    }
     
     # Si el switch está en "Agrupado (Total)" (TRUE)
     if (input$agrupar_grafico) {
       
-      # --- INICIO DE NUEVA LÓGICA DE COLOR ---
-      
-      # 1. Encontrar las regiones únicas de las provincias seleccionadas
-      #    Usamos el 'conicet' cargado al inicio del server
+      # --- LÓGICA DE COLOR POR REGIÓN ---
       regiones_seleccionadas <- conicet %>%
         filter(PROVINCIA %in% provincias_seleccionadas) %>%
         select(REGION) %>%
@@ -179,31 +182,24 @@ server <- function(input, output, session) {
       
       n_regiones <- length(regiones_seleccionadas)
       
-      # 2. Definir el color
-      if (n_regiones == 1) {
-        # Si es 1, tomar el color de la paleta 'colores_regiones'
-        # (Asumimos que 'colores_regiones' es un vector/lista nombrado, ej: colores_regiones["Patagonia"])
-        color_linea <- colores_regiones[regiones_seleccionadas[1]]
-      } else {
-        # Si son 0 o más de 1, usar un color neutral
-        color_linea <- "blue"
-      }
-      # --- FIN DE LÓGICA DE COLOR ---
+      # Si es una sola región, usa su color; si son varias o ninguna, usa azul
+      color_linea <- if (n_regiones == 1) colores_regiones[regiones_seleccionadas[1]] else "blue"
       
       datos_tiempo <- filteredData() %>%
         filter(PROVINCIA %in% provincias_seleccionadas) %>%
         group_by(AÑO) %>%
         summarise(total_proyectos = n())
       
-      max_y <- ifelse(length(datos_tiempo$total_proyectos) > 0, max(datos_tiempo$total_proyectos, na.rm = TRUE), 0)
+      # Protección extra por si el filtro de años deja los datos vacíos
+      if (nrow(datos_tiempo) == 0) return(ggplot() + theme_void())
+      
+      max_y <- max(datos_tiempo$total_proyectos, na.rm = TRUE)
       
       ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos)) +
-        # --- USAMOS LA VARIABLE DE COLOR ---
         geom_line(color = color_linea, size = 1) +
         geom_point(size = 3, color = color_linea) +
-        # ---
         labs(title = "Proyectos por año (Total)", x = "", y = "") + 
-        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
+        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO), max(datos_tiempo$AÑO), by = 2)) +
         scale_y_continuous(limits = c(0, max_y * 1.1)) + 
         theme_minimal() +
         theme(
@@ -211,49 +207,35 @@ server <- function(input, output, session) {
           axis.text.x = element_text(size = 12), 
           axis.text.y = element_text(size = 12)  
         ) +
-        geom_text(aes(label = total_proyectos), 
-                  nudge_y = -8, 
-                  vjust = -0.5, 
-                  size = 4, 
-                  show.legend = FALSE) 
+        geom_text(aes(label = total_proyectos), vjust = -0.5, size = 4) 
       
     } else {
-      # Si está en "Por Provincia" (FALSE), creamos el gráfico desagrupado
+      # Modo "Por Provincia" (FALSE)
       
       datos_tiempo <- filteredData() %>%
         filter(PROVINCIA %in% provincias_seleccionadas) %>%
-        group_by(AÑO, PROVINCIA) %>% # Agrupamos por PROVINCIA
+        group_by(AÑO, PROVINCIA) %>% 
         summarise(total_proyectos = n(), .groups = "drop")
       
-      max_y <- ifelse(length(datos_tiempo$total_proyectos) > 0, max(datos_tiempo$total_proyectos, na.rm = TRUE), 0)
+      if (nrow(datos_tiempo) == 0) return(ggplot() + theme_void())
+      
+      max_y <- max(datos_tiempo$total_proyectos, na.rm = TRUE)
       
       ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos, color = PROVINCIA, group = PROVINCIA)) + 
         geom_line(size = 1) +
         geom_point(size = 2) + 
-        labs(title = "Proyectos por año y provincia", x = "", y = "", color = "PROVINCIA") + 
-        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
+        labs(title = "Proyectos por año y provincia", x = "", y = "") + 
+        scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO), max(datos_tiempo$AÑO), by = 2)) +
         scale_y_continuous(limits = c(0, max_y * 1.1)) + 
         theme_minimal() +
         theme(
           plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
           axis.text.x = element_text(size = 12), 
           axis.text.y = element_text(size = 12),
-          # Ajustes de leyenda para evitar que choque con el mapa
-          legend.position = "bottom",
-          legend.title = element_text(size = 10, face = "bold"),
-          legend.text = element_text(size = 8),
-          legend.box.margin = margin(t = 10)
-        ) +
-        # Mover título arriba y organizar en filas para optimizar espacio
-        guides(color = guide_legend(
-          title.position = "top", 
-          title.hjust = 0.5,
-          ncol = 3,
-          byrow = TRUE
-        ))
+          legend.position = "bottom" 
+        )
     }
-  })
-  
+  })  
   #### Proyectos región ####
   
   output$graficoProyectosRegion <- renderPlot({
