@@ -159,10 +159,9 @@ server <- function(input, output, session) {
   
   #### Proyectos tiempo ####
   
-  #### Proyectos tiempo ####
-  
   output$graficoProyectosTiempo <- renderPlot({
     
+    # Filtrar datos por provincias seleccionadas, considerando "Todas"
     provincias_seleccionadas <- input$provincia_filter
     
     # Si el switch está en "Agrupado (Total)" (TRUE)
@@ -191,7 +190,6 @@ server <- function(input, output, session) {
       }
       # --- FIN DE LÓGICA DE COLOR ---
       
-      
       datos_tiempo <- filteredData() %>%
         filter(PROVINCIA %in% provincias_seleccionadas) %>%
         group_by(AÑO) %>%
@@ -206,21 +204,21 @@ server <- function(input, output, session) {
         # ---
         labs(title = "Proyectos por año (Total)", x = "", y = "") + 
         scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
-        scale_y_continuous(limits = c(0, max_y * 1.1)) + # Damos 10% de espacio
+        scale_y_continuous(limits = c(0, max_y * 1.1)) + 
         theme_minimal() +
         theme(
-          plot.title = element_text(size = 18,face = "bold", hjust = 0.5), 
+          plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
           axis.text.x = element_text(size = 12), 
           axis.text.y = element_text(size = 12)  
         ) +
         geom_text(aes(label = total_proyectos), 
+                  nudge_y = -8, 
                   vjust = -0.5, 
                   size = 4, 
                   show.legend = FALSE) 
       
     } else {
       # Si está en "Por Provincia" (FALSE), creamos el gráfico desagrupado
-      # (Esta parte no se modifica)
       
       datos_tiempo <- filteredData() %>%
         filter(PROVINCIA %in% provincias_seleccionadas) %>%
@@ -232,17 +230,27 @@ server <- function(input, output, session) {
       ggplot(datos_tiempo, aes(x = AÑO, y = total_proyectos, color = PROVINCIA, group = PROVINCIA)) + 
         geom_line(size = 1) +
         geom_point(size = 2) + 
-        labs(title = "Proyectos por año y provincia", x = "", y = "") + 
+        labs(title = "Proyectos por año y provincia", x = "", y = "", color = "PROVINCIA") + 
         scale_x_continuous(breaks = seq(min(datos_tiempo$AÑO, na.rm=T), max(datos_tiempo$AÑO, na.rm=T), by = 2)) +
         scale_y_continuous(limits = c(0, max_y * 1.1)) + 
-        
         theme_minimal() +
         theme(
-          plot.title = element_text(size = 18,face = "bold", hjust = 0.5),
+          plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
           axis.text.x = element_text(size = 12), 
           axis.text.y = element_text(size = 12),
-          legend.position = "bottom" 
-        )
+          # Ajustes de leyenda para evitar que choque con el mapa
+          legend.position = "bottom",
+          legend.title = element_text(size = 10, face = "bold"),
+          legend.text = element_text(size = 8),
+          legend.box.margin = margin(t = 10)
+        ) +
+        # Mover título arriba y organizar en filas para optimizar espacio
+        guides(color = guide_legend(
+          title.position = "top", 
+          title.hjust = 0.5,
+          ncol = 3,
+          byrow = TRUE
+        ))
     }
   })
   

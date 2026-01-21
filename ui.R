@@ -205,8 +205,8 @@ ui <-
                                                      
                                                      options = list(
                                                        `actions-box` = TRUE,
-                                                       `select-all-text` = "Seleccionar Todo",
-                                                       `deselect-all-text` = "Deseleccionar Todo"
+                                                       `select-all-text` = "Seleccionar todo",
+                                                       `deselect-all-text` = "Vaciar selección"
                                                      ), 
                                                      
                                                      multiple = TRUE,
